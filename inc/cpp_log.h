@@ -18,19 +18,19 @@ public:
 
   /// Enums
   enum { EErr = 0, ENoErr };        ///< return values
-  typedef enum { ELogDisable,       ///< no logging
+  typedef enum { ELogDisable = 0,   ///< no logging
                  ELogError,         ///< just errors
                  ELogWarn,          ///< errors and warnings
                  ELogVerbose,       ///< errors, warnings, and notices
                  ELogDebug          ///< errors, warnings, notices, and debug messages
                } level_e;           ///< loglevel
 
-  typedef enum { ELogStyleNone,     ///< print just the plain message
-                 ELogStyleMinimal,  ///< output minimalistic logging
-                 ELogStyleDefault,  ///< time && level
-                 ELogStyleVerbose,  ///< output verbose logging
-                 ELogStyleUser      ///< user-defined style
-               } style_e;           ///< logstyle
+  typedef enum { ELogProfileNone  = 0,///< print just the plain message
+                 ELogProfileMinimal,  ///< output minimalistic logging
+                 ELogProfileDefault,  ///< time && level
+                 ELogProfileVerbose,  ///< output verbose logging
+                 ELogProfileUser      ///< user-defined style
+               } profile_e;           ///< logstyle
 
   /// Constants
   static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
@@ -47,20 +47,21 @@ public:
   static const char *CLogMsgDebug;
   static const char *CLogMsgAlways;
   static const level_e CLogLevelDefault = ELogDebug;
-  static const style_e CLogStyleDefault = ELogStyleNone;
+  static const profile_e CLogProfileDefault = ELogProfileNone;
 
   /// Logger configuration
   typedef struct cfgLog {
 
     enum {
-      ELevelDefault = 0,  ///< default level string, e.g. Notice
-      ELevelLower,        ///< lower case level string, e.g. notice
-      ELevelUpper         ///< upper case level string, e.g. NOTICE
+      ELevelCaseDefault = 0,  ///< default level string, e.g. Notice
+      ELevelCaseLower,        ///< lower case level string, e.g. notice
+      ELevelCaseUpper         ///< upper case level string, e.g. NOTICE
     };
 
     Logger::level_e logLevel;              ///< loglevel
-    Logger::style_e logStyle;              ///< logstyle
+    Logger::profile_e logProfile;          ///< logstyle
     bool logToFile;                        ///< flag for file logging
+    int  logLevelCase;                     ///< print level in default, lower- or uppercase
 
     char logfile[Logger::CMaxPathLen];     ///< path to logfile
     char prefix[Logger::CMaxPrefixLen];    ///< set prefix
@@ -70,28 +71,26 @@ public:
     char pattern[Logger::CMaxPatternLen];  ///< log msg pattern
     char userDefinedPatternItem[Logger::CMaxPatternItemLen];  ///< user defined pattern item
 
-    // advanced configuration
-    int  logLevelCase;                     ///< print level in default, lower- or uppercase
-
-
     /// Constructor
     cfgLog() {
 
       logLevel = Logger::CLogLevelDefault;
-      logStyle = Logger::CLogStyleDefault;
-
+      logProfile = Logger::CLogProfileDefault;
       logToFile = false;
+      logLevelCase  = ELevelCaseDefault;
 
+      // init strings
       memset(prefix, '\0', sizeof(prefix));
       memset(postfix, '\0', sizeof(postfix));
       memset(logfile, '\0', sizeof(logfile));
       memset(separator, '\0', sizeof(separator));
       memset(pattern, '\0', sizeof(pattern));
       memset(userDefinedPatternItem, '\0', sizeof(userDefinedPatternItem));
+
+      // set defaults
       strcpy(separator, " | ");
       strcpy(postfix, "\n");
 
-      logLevelCase  = ELevelDefault;
     }
 
   } CfgLog;
@@ -106,10 +105,12 @@ public:
   /// @param[in] logfile path to logfile, may be NULL for stdout
   /// @param[in] level desired loglevel [0...4]
   /// @param[in] style desired logstyle [0...2]
-  Logger(const char *logfile, level_e level, style_e style);
+  Logger(const char *logfile, level_e level, profile_e style);
 
   /// Destructor
   ~Logger();
+
+  int init(CfgLog *cfg);
 
   void error(const char *fmt, ...);
   void warning(const char *fmt, ...);
@@ -118,9 +119,9 @@ public:
   void always(const char *fmt, ...);
 
   level_e getLevel(void);
-  style_e getStyle(void);
+  profile_e getProfile(void);
   void setLevel(level_e level);
-  void setStyle(style_e style);
+  void setProfile(profile_e style);
 
   int setPattern(const char *pattern);
   char *getPattern(void);
@@ -139,24 +140,23 @@ private:
         EPatEnd
       } pattern_e;
 
-  CfgLog *m_cfg;             ///> logger config
-  FILE *m_fd;                ///> file descriptor
-  va_list m_args;            ///> current fmt arguments
-  bool m_removeCfg;          ///> flag to remove cfgLog in case it was created at ctor
-
-  pattern_e m_pattern[CMaxPatternItems];
+  CfgLog *m_cfg;             ///< logger config
+  FILE *m_fd;                ///< file descriptor
+  va_list m_args;            ///< current fmt arguments
+  bool m_removeCfg;          ///< flag to remove cfgLog in case it was created at ctor
+  pattern_e m_pattern[CMaxPatternItems];  ///< currently set pattern array
 
   /// Initialize logger
   void init(void);
 
   /// Initialize configuration from pattern
-  /// @param[in] pattern
+  /// @param[in] pattern string
   /// @return ENoErr on success, EErr on failure
   int initPattern(const char *pattern);
 
   /// Initialize a default logstyle
   /// sets all style setting to defaults depending on logstyle set
-  void initStyle(void);
+  void initProfile(void);
 
   void addUsr(char *msg);
   void addMsg(char *msg, const char *fmt);

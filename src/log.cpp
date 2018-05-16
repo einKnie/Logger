@@ -7,13 +7,19 @@ extern "C" {
   #include "utils.h"
 }
 
-// default logstyle patterns
-char patterns[][Logger::CMaxPatternLen] =
-                    {"&msg&end",                              // ELogStyleNone
-                     "&pre&lev&sep&msg&end",                  // ELogStyleMinimal
-                     "&pre&tim&sep&lev&sep&msg&end",          // ELogStyleDefault
-                     "&pre&pid&sep&tim&sep&lev&sep&msg&end",  // ELogStyleVerbose
+// default logprofile patterns
+char default_patterns[][Logger::CMaxPatternLen] =
+                    {"&msg&end",                              // ELogProfileNone
+                     "&pre&lev&sep&msg&end",                  // ELogProfileMinimal
+                     "&pre&tim&sep&lev&sep&msg&end",          // ELogProfileDefault
+                     "&pre&pid&sep&tim&sep&lev&sep&msg&end",  // ELogProfileVerbose
                     };
+// default level caase config for default profiles
+int default_level_cases[] = { Logger::CfgLog::ELevelCaseLower,    // ELogProfileNone
+                              Logger::CfgLog::ELevelCaseLower,    // ELogProfileMinimal
+                              Logger::CfgLog::ELevelCaseDefault,  // ELogProfileDefault
+                              Logger::CfgLog::ELevelCaseUpper     // ELogProfileVerbose
+                            };
 
 const char *Logger::CLogMsgError     = "Error";
 const char *Logger::CLogMsgWarning   = "Warning";
@@ -21,14 +27,14 @@ const char *Logger::CLogMsgNotice    = "Notice";
 const char *Logger::CLogMsgDebug     = "Debug";
 const char *Logger::CLogMsgAlways    = "Always";
 
-Logger::Logger() : Logger(NULL, CLogLevelDefault, CLogStyleDefault) {}
-Logger::Logger(const char *logfile, Logger::level_e level, Logger::style_e style) {
+Logger::Logger() : Logger(NULL, CLogLevelDefault, CLogProfileDefault) {}
+Logger::Logger(const char *logfile, Logger::level_e level, Logger::profile_e profile) {
 
   m_cfg = new CfgLog();
   m_removeCfg = true;
 
   m_cfg->logLevel = level;
-  m_cfg->logStyle = style;
+  m_cfg->logProfile = profile;
 
   if (logfile != NULL) {
     strncpy(m_cfg->logfile, logfile, sizeof(m_cfg->logfile));
@@ -64,13 +70,23 @@ Logger::~Logger() {
   }
 }
 
+int Logger::init(CfgLog *cfg) {
+  if (cfg != NULL) {
+    if (m_removeCfg) delete m_cfg;
+    m_cfg = cfg;
+  } else return EErr;
+
+  init();
+  return ENoErr;
+}
+
 void Logger::init() {
 
-  // initialize oattern directly if available
+  // initialize pattern if available, else a profile
   if (m_cfg->pattern[0] == '\0') {
-    initStyle();
+    initProfile();
   } else {
-    m_cfg->logStyle = ELogStyleUser;
+    m_cfg->logProfile = ELogProfileUser;
     initPattern(m_cfg->pattern);
   }
 
@@ -206,13 +222,13 @@ void Logger::setLevel(Logger::level_e level) {
   m_cfg->logLevel = level;
 }
 
-Logger::style_e Logger::getStyle() {
-  return m_cfg->logStyle;
+Logger::profile_e Logger::getProfile() {
+  return m_cfg->logProfile;
 }
 
-void Logger::setStyle(Logger::style_e style) {
-  m_cfg->logStyle = style;
-  initStyle();
+void Logger::setProfile(Logger::profile_e profile) {
+  m_cfg->logProfile = profile;
+  initProfile();
 }
 
 char *Logger::getPattern(void) {
@@ -220,17 +236,19 @@ char *Logger::getPattern(void) {
 }
 
 int Logger::setPattern(const char *pattern) {
-  if (initPattern(pattern) == EErr) return EErr;
-
-  strncpy(m_cfg->pattern, pattern, sizeof(m_cfg->pattern));
-  return ENoErr;
+  if (initPattern(pattern) == ENoErr) {
+  	strncpy(m_cfg->pattern, pattern, sizeof(m_cfg->pattern));
+    return ENoErr;
+  }
+  return EErr;
 }
 
-/// Set style presets
-void Logger::initStyle() {
-  if (m_cfg->logStyle != ELogStyleUser) {
-    PRINT_DEBUG("setting pattern: %s\n", patterns[(int)m_cfg->logStyle]);
-    strncpy(m_cfg->pattern, patterns[(int)m_cfg->logStyle], sizeof(m_cfg->pattern));
+/// Set profile presets
+void Logger::initProfile() {
+  if (m_cfg->logProfile != ELogProfileUser) {
+    PRINT_DEBUG("setting pattern: %s\n", default_patterns[(int)m_cfg->logProfile]);
+    strncpy(m_cfg->pattern, default_patterns[(int)m_cfg->logProfile], sizeof(m_cfg->pattern));
+    m_cfg->logLevelCase = default_level_cases[(int)m_cfg->logProfile];
   }
   initPattern(m_cfg->pattern);
 }
@@ -349,9 +367,9 @@ void Logger::addLevel(char *msg, const char *level) {
 
   strcpy(lbuf, level);
   switch(m_cfg->logLevelCase) {
-    case CfgLog::ELevelDefault: break;
-    case CfgLog::ELevelLower: to_lower(lbuf, strlen(lbuf)); break;
-    case CfgLog::ELevelUpper: to_upper(lbuf, strlen(lbuf)); break;
+    case CfgLog::ELevelCaseLower: to_lower(lbuf, strlen(lbuf)); break;
+    case CfgLog::ELevelCaseUpper: to_upper(lbuf, strlen(lbuf)); break;
+    case CfgLog::ELevelCaseDefault: // move to default
     default: break;
   }
 
