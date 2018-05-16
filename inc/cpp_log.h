@@ -35,19 +35,18 @@ public:
   /// Constants
   static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
   static const int   CMaxMsgLen         = 500;        ///< max logger line length
-  static const int   CMaxHeaderLen      = 100;
-  static const int   CMaxPrefixLen      = 10;
-  static const int   CMaxSepLen         = 10;
-  static const int   CMaxPatternLen     = 80;
-  static const int   CMaxPatternItems   = 10;
-  static const int   CMaxPatternItemLen = 10;
-  static const char *CLogMsgError;
-  static const char *CLogMsgWarning;
-  static const char *CLogMsgNotice;
-  static const char *CLogMsgDebug;
-  static const char *CLogMsgAlways;
-  static const level_e CLogLevelDefault = ELogDebug;
-  static const profile_e CLogProfileDefault = ELogProfileNone;
+  static const int   CMaxPrefixLen      = 10;         ///< maximum length of the msg prefix
+  static const int   CMaxSepLen         = 10;         ///< maximum length of the separator
+  static const int   CMaxPatternItems   = 10;         ///< maximum number of pattern items which may be set
+  static const int   CMaxPatternItemLen = 10;         ///< maximum length of a pattern item
+  static const int   CMaxPatternLen     = CMaxPatternItems * 4 + 1; ///< 10*4 characters + null termination
+  static const char *CLogMsgError;                    ///< Error string
+  static const char *CLogMsgWarning;                  ///< Warning string
+  static const char *CLogMsgNotice;                   ///< Notice string
+  static const char *CLogMsgDebug;                    ///< Debug string
+  static const char *CLogMsgAlways;                   ///< Always string
+  static const level_e CLogLevelDefault = ELogDebug;            ///< default loglevel value
+  static const profile_e CLogProfileDefault = ELogProfileNone;  ///< default profile
 
   /// Logger configuration
   typedef struct cfgLog {
@@ -59,7 +58,7 @@ public:
     };
 
     Logger::level_e logLevel;              ///< loglevel
-    Logger::profile_e logProfile;          ///< logstyle
+    Logger::profile_e profile;          ///< logstyle
     bool logToFile;                        ///< flag for file logging
     int  logLevelCase;                     ///< print level in default, lower- or uppercase
 
@@ -75,7 +74,7 @@ public:
     cfgLog() {
 
       logLevel = Logger::CLogLevelDefault;
-      logProfile = Logger::CLogProfileDefault;
+      profile  = Logger::CLogProfileDefault;
       logToFile = false;
       logLevelCase  = ELevelCaseDefault;
 
@@ -156,7 +155,7 @@ private:
 
   /// Initialize a default logstyle
   /// sets all style setting to defaults depending on logstyle set
-  void initProfile(void);
+  void initProfile(profile_e profile);
 
   void addUsr(char *msg);
   void addMsg(char *msg, const char *fmt);

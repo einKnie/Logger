@@ -34,7 +34,7 @@ Logger::Logger(const char *logfile, Logger::level_e level, Logger::profile_e pro
   m_removeCfg = true;
 
   m_cfg->logLevel = level;
-  m_cfg->logProfile = profile;
+  m_cfg->profile = profile;
 
   if (logfile != NULL) {
     strncpy(m_cfg->logfile, logfile, sizeof(m_cfg->logfile));
@@ -82,14 +82,6 @@ int Logger::init(CfgLog *cfg) {
 
 void Logger::init() {
 
-  // initialize pattern if available, else a profile
-  if (m_cfg->pattern[0] == '\0') {
-    initProfile();
-  } else {
-    m_cfg->logProfile = ELogProfileUser;
-    initPattern(m_cfg->pattern);
-  }
-
   // set log destination
   m_fd = NULL;
   if (m_cfg->logToFile) {
@@ -97,13 +89,37 @@ void Logger::init() {
     if (m_fd == NULL) {
       m_cfg->logToFile = false;
       m_fd = stdout;
-      error("Failed to reroute logging to file @ %s: %d", m_cfg->logfile, errno);
-      notice("Routing all logging to stdout");
+      fprintf(stderr, "Failed to reroute logging to file @ %s: %d", m_cfg->logfile, errno);
+      fprintf(stderr, "Routing all logging to stdout");
     }
   } else {
     m_fd = stdout;
   }
 
+  if (m_cfg->profile == ELogProfileUser) {
+      if (initPattern(m_cfg->pattern) == ENoErr) {
+        return;
+      } else {
+        fprintf(stderr, "Failed to apply pattern.\n");
+        fprintf(stderr, "Reverting to default....\n");
+        // revert to default
+        m_cfg->profile = CLogProfileDefault;
+      }
+  }
+
+  // initialize one of the standard profiles
+  initProfile(m_cfg->profile);
+}
+
+void Logger::initProfile(profile_e profile) {
+
+  if (!initPattern(default_patterns[(int)m_cfg->profile])) {
+    fprintf(stderr, "Failed to initialize standard profile.\n");
+  } else {
+    PRINT_DEBUG("setting pattern: %s\n", default_patterns[(int)m_cfg->profile]);
+    strncpy(m_cfg->pattern, default_patterns[(int)m_cfg->profile], sizeof(m_cfg->pattern));
+    m_cfg->logLevelCase = default_level_cases[(int)m_cfg->profile];
+  }
 }
 
 void Logger::error(const char *fmt, ...) {
@@ -122,7 +138,6 @@ void Logger::error(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgError);
-
   va_start(m_args, fmt);
   log(msg);
   va_end(m_args);
@@ -144,7 +159,6 @@ void Logger::warning(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgWarning);
-
   va_start(m_args, fmt);
   log(msg);
   va_end(m_args);
@@ -166,7 +180,6 @@ void Logger::notice(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgNotice);
-
   va_start(m_args, fmt);
   log(&msg[0]);
   va_end(m_args);
@@ -188,7 +201,6 @@ void Logger::debug(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgDebug);
-
   va_start(m_args, fmt);
   log(msg);
   va_end(m_args);
@@ -201,17 +213,14 @@ void Logger::always(const char *fmt, ...) {
   if (m_fd == NULL) return;
 
   constructMsg(msg, fmt, Logger::CLogMsgAlways);
-
   va_start(m_args, fmt);
   log(msg);
   va_end(m_args);
 }
 
 void Logger::log(const char *msg) {
-
   (void)vfprintf(m_fd, msg, m_args);
   (void)fflush(m_fd);
-
 }
 
 Logger::level_e Logger::getLevel() {
@@ -223,12 +232,12 @@ void Logger::setLevel(Logger::level_e level) {
 }
 
 Logger::profile_e Logger::getProfile() {
-  return m_cfg->logProfile;
+  return m_cfg->profile;
 }
 
 void Logger::setProfile(Logger::profile_e profile) {
-  m_cfg->logProfile = profile;
-  initProfile();
+  m_cfg->profile = profile;
+  initProfile(m_cfg->profile);
 }
 
 char *Logger::getPattern(void) {
@@ -239,18 +248,10 @@ int Logger::setPattern(const char *pattern) {
   if (initPattern(pattern) == ENoErr) {
   	strncpy(m_cfg->pattern, pattern, sizeof(m_cfg->pattern));
     return ENoErr;
+  } else {
+    initProfile(CLogProfileDefault);
+    return EErr;
   }
-  return EErr;
-}
-
-/// Set profile presets
-void Logger::initProfile() {
-  if (m_cfg->logProfile != ELogProfileUser) {
-    PRINT_DEBUG("setting pattern: %s\n", default_patterns[(int)m_cfg->logProfile]);
-    strncpy(m_cfg->pattern, default_patterns[(int)m_cfg->logProfile], sizeof(m_cfg->pattern));
-    m_cfg->logLevelCase = default_level_cases[(int)m_cfg->logProfile];
-  }
-  initPattern(m_cfg->pattern);
 }
 
 int Logger::initPattern(const char *pattern) {

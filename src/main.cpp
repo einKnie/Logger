@@ -12,11 +12,12 @@ int main(int argc, const char *argv[]) {
   // cfg->logToFile = true;
   // strcpy(cfg->logfile, "./file.log");
   strncpy(cfg->pattern, "&pre&lev&sep&usr&tim&usr&sep&msg&end", sizeof(cfg->pattern));
+  cfg->profile = Logger::ELogProfileUser;
 
   Logger *logger = new Logger(cfg);
   logger->always("blubbedi");
 
-  logger->setPattern("&pre&sep&pid&sep&lev&sep&msg&end");
+  logger->setPattern("&pr&bube&sep&pid&sep&lev&sep&msg&end");
   logger->always("blü");
 
   delete logger;
@@ -94,7 +95,7 @@ void test_logger2(Logger::CfgLog *cfg) {
   log->always("Testing profiles");
   for (int i = 0; i <= Logger::ELogProfileVerbose;) {
 
-    myCfg->logProfile = (Logger::profile_e)i++;
+    myCfg->profile = (Logger::profile_e)i++;
     log->init(myCfg);
 
     log->always("test %d start...", i);
@@ -107,7 +108,7 @@ void test_logger2(Logger::CfgLog *cfg) {
 
   }
 
-  myCfg->logProfile = Logger::ELogProfileDefault;
+  myCfg->profile = Logger::ELogProfileDefault;
   log->init(myCfg);
 
   log->always("Testing levels");
