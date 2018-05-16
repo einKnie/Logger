@@ -7,10 +7,13 @@ extern "C" {
   #include "utils.h"
 }
 
-// TODO
-// maybe define a couple of itentifiers for the different msg fields
-// && let user configure via pattern string
-// e.g. "%pid%sep%tim%sep%lev%sep%msg" and let user define ordering this way
+// default logstyle patterns
+char patterns[][Logger::CMaxPatternLen] =
+                    {"&msg&end",                              // ELogStyleNone
+                     "&pre&lev&sep&msg&end",                  // ELogStyleMinimal
+                     "&pre&tim&sep&lev&sep&msg&end",          // ELogStyleDefault
+                     "&pre&pid&sep&tim&sep&lev&sep&msg&end",  // ELogStyleVerbose
+                    };
 
 const char *Logger::CLogMsgError     = "Error";
 const char *Logger::CLogMsgWarning   = "Warning";
@@ -18,16 +21,7 @@ const char *Logger::CLogMsgNotice    = "Notice";
 const char *Logger::CLogMsgDebug     = "Debug";
 const char *Logger::CLogMsgAlways    = "Always";
 
-const char *Logger::CLogPatternDefault = "&tim&sep&lev&sep&msg&end";
-
-char patterns[][Logger::CMaxPatternLen] = {"&msg&end",                              // ELogStyleNone
-                     "&pre&lev&sep&msg&end",                  // ELogStyleMinimal
-                     "&pre&tim&sep&lev&sep&msg&end",          // ELogStyleDefault
-                     "&pre&pid&sep&tim&sep&lev&sep&msg&end",  // ELogStyleVerbose
-                    };
-
 Logger::Logger() : Logger(NULL, CLogLevelDefault, CLogStyleDefault) {}
-// Logger::Logger(const char *logfile) : Logger(logfile, CLogLevelDefault, CLogStyleDefault) {}
 Logger::Logger(const char *logfile, Logger::level_e level, Logger::style_e style) {
 
   m_cfg = new CfgLog();
@@ -45,8 +39,6 @@ Logger::Logger(const char *logfile, Logger::level_e level, Logger::style_e style
 }
 
 Logger::Logger(Logger::CfgLog *cfg) {
-  // TODO: think about
-  //
   if (cfg == NULL) {
     m_cfg = new CfgLog();
     m_removeCfg = true;
@@ -74,12 +66,15 @@ Logger::~Logger() {
 
 void Logger::init() {
 
+  // initialize oattern directly if available
   if (m_cfg->pattern[0] == '\0') {
     initStyle();
+  } else {
+    m_cfg->logStyle = ELogStyleUser;
+    initPattern(m_cfg->pattern);
   }
 
-  initPattern(m_cfg->pattern);
-
+  // set log destination
   m_fd = NULL;
   if (m_cfg->logToFile) {
     m_fd = fopen(m_cfg->logfile, "w");
@@ -110,7 +105,7 @@ void Logger::error(const char *fmt, ...) {
     default: return;
   }
 
-  constructPatternMsg(msg, fmt, Logger::CLogMsgError);
+  constructMsg(msg, fmt, Logger::CLogMsgError);
 
   va_start(m_args, fmt);
   log(msg);
@@ -132,7 +127,7 @@ void Logger::warning(const char *fmt, ...) {
     default: return;
   }
 
-  constructPatternMsg(msg, fmt, Logger::CLogMsgWarning);
+  constructMsg(msg, fmt, Logger::CLogMsgWarning);
 
   va_start(m_args, fmt);
   log(msg);
@@ -154,7 +149,7 @@ void Logger::notice(const char *fmt, ...) {
     default: return;
   }
 
-  constructPatternMsg(msg, fmt, Logger::CLogMsgNotice);
+  constructMsg(msg, fmt, Logger::CLogMsgNotice);
 
   va_start(m_args, fmt);
   log(&msg[0]);
@@ -176,7 +171,7 @@ void Logger::debug(const char *fmt, ...) {
     default: return;
   }
 
-  constructPatternMsg(msg, fmt, Logger::CLogMsgDebug);
+  constructMsg(msg, fmt, Logger::CLogMsgDebug);
 
   va_start(m_args, fmt);
   log(msg);
@@ -189,7 +184,7 @@ void Logger::always(const char *fmt, ...) {
 
   if (m_fd == NULL) return;
 
-  constructPatternMsg(msg, fmt, Logger::CLogMsgAlways);
+  constructMsg(msg, fmt, Logger::CLogMsgAlways);
 
   va_start(m_args, fmt);
   log(msg);
@@ -207,12 +202,12 @@ Logger::level_e Logger::getLevel() {
   return m_cfg->logLevel;
 }
 
-Logger::style_e Logger::getStyle() {
-  return m_cfg->logStyle;
-}
-
 void Logger::setLevel(Logger::level_e level) {
   m_cfg->logLevel = level;
+}
+
+Logger::style_e Logger::getStyle() {
+  return m_cfg->logStyle;
 }
 
 void Logger::setStyle(Logger::style_e style) {
@@ -220,49 +215,30 @@ void Logger::setStyle(Logger::style_e style) {
   initStyle();
 }
 
+char *Logger::getPattern(void) {
+  return m_cfg->pattern;
+}
+
+int Logger::setPattern(const char *pattern) {
+  if (initPattern(pattern) == EErr) return EErr;
+
+  strncpy(m_cfg->pattern, pattern, sizeof(m_cfg->pattern));
+  return ENoErr;
+}
+
 /// Set style presets
 void Logger::initStyle() {
-
-  switch (m_cfg->logStyle) {
-    case ELogStyleUser: return;
-    case ELogStyleNone:
-      m_cfg->printTime = false;
-      m_cfg->printPid = false;
-      m_cfg->printLevel = false;
-      PRINT_DEBUG("logStyle: None\n");
-      break;
-    case ELogStyleMinimal:
-      m_cfg->printTime = false;
-      m_cfg->printPid = false;
-      m_cfg->printLevel = true;
-      m_cfg->logLevelCase = CfgLog::ELevelLower;
-      PRINT_DEBUG("logStyle: Minimal\n");
-      break;
-    case ELogStyleDefault:
-      m_cfg->printTime = true;
-      m_cfg->printPid = false;
-      m_cfg->printLevel = true;
-      m_cfg->logLevelCase = CfgLog::ELevelDefault;
-      PRINT_DEBUG("logStyle: Default\n");
-      break;
-    case ELogStyleVerbose:
-      m_cfg->printTime = true;
-      m_cfg->printPid = true;
-      m_cfg->printLevel = true;
-      m_cfg->logLevelCase = CfgLog::ELevelUpper;
-      PRINT_DEBUG("logStyle: Verbose\n");
-      break;
-    default: break;
+  if (m_cfg->logStyle != ELogStyleUser) {
+    PRINT_DEBUG("setting pattern: %s\n", patterns[(int)m_cfg->logStyle]);
+    strncpy(m_cfg->pattern, patterns[(int)m_cfg->logStyle], sizeof(m_cfg->pattern));
   }
-  PRINT_DEBUG("setting pattern: %s\n", patterns[(int)m_cfg->logStyle]);
-  strncpy(m_cfg->pattern, patterns[(int)m_cfg->logStyle], sizeof(m_cfg->pattern));
   initPattern(m_cfg->pattern);
 }
 
 int Logger::initPattern(const char *pattern) {
 
   char tmp[5] = {0};
-  int patLen = strlen(pattern);
+  int  patLen = strlen(pattern);
   char pat[Logger::CMaxPatternLen] = {0};
 
   // reset pattern array
@@ -330,66 +306,7 @@ int Logger::initPattern(const char *pattern) {
   return ENoErr;
 }
 
-/// msg:
-/// <prefix><separator><pid><separator><time><separator><level><separator><payload>
-/// order of items is fixed, but any and all items except the payload can be removed
 void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
-  char buf[Logger::CMaxMsgLen] = {0};
-
-  // Prefix
-  if (m_cfg->printPrefix) {
-    sprintf(buf, "%s ", m_cfg->prefix);
-  }
-
-  // process PID
-  if (m_cfg->printPid) {
-    char pidbuf[20] = {0};
-    sprintf(pidbuf, "%5d%s", getpid(), m_cfg->separator);
-    strcat(buf, pidbuf);
-  }
-
-  // Time
-  if (m_cfg->printTime) {
-    //get time
-    char timebuf[20] = {0};
-    time_t t;
-    struct tm *tm;
-    time(&t);
-    tm = localtime(&t);
-
-    sprintf(timebuf, "%02d:%02d:%02d%s",
-                tm->tm_hour, tm->tm_min, tm->tm_sec,
-                m_cfg->separator);
-    strcat(buf, timebuf);
-  }
-
-  // Msg Level
-  if (m_cfg->printLevel) {
-    char levelbuf[20] = {0};
-    char lbuf[10] = {0};
-
-    strcpy(lbuf, level);
-    switch(m_cfg->logLevelCase) {
-      case CfgLog::ELevelDefault: break;
-      case CfgLog::ELevelLower: to_lower(lbuf, strlen(lbuf)); break;
-      case CfgLog::ELevelUpper: to_upper(lbuf, strlen(lbuf)); break;
-      default: break;
-    }
-
-    sprintf(levelbuf, "%-7s%s", lbuf, m_cfg->separator);
-    strcat(buf, levelbuf);
-  }
-
-  // construct logmsg from header && payload
-  sprintf(msg, "%s%s", buf, fmt);
-
-  // add Newline
-  if(m_cfg->printNewline) {
-    strcat(msg, "\n");
-  }
-}
-
-void Logger::constructPatternMsg(char *msg, const char *fmt, const char *level) {
   char buf[CMaxMsgLen] = {0};
 
   for (int i = 0; i < CMaxPatternItems; i++) {

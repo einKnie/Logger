@@ -4,24 +4,24 @@ void test_logger(Logger::CfgLog *cfg = NULL);
 
 int main(int argc, const char *argv[]) {
 
-  // Logger::CfgLog *cfg = new Logger::CfgLog();
-  // cfg->printNewline = true;
-  // cfg->printLevel = false;
-  // cfg->printTime = false;
-  // cfg->printPid = false;
-  // strcpy(cfg->separator, " | ");
-  // cfg->printPrefix = true;
-  // strcpy(cfg->prefix, ">");
+  Logger::CfgLog *cfg = new Logger::CfgLog();
+  strcpy(cfg->separator, " | ");
+  strcpy(cfg->prefix, "> ");
   // cfg->logToFile = true;
   // strcpy(cfg->logfile, "./file.log");
+  strncpy(cfg->pattern, "&pre&lev&sep&tim&sep&msg&end", sizeof(cfg->pattern));
 
-  Logger *logger = new Logger();
-  logger->always("blubbedi\n\n");
+  Logger *logger = new Logger(cfg);
+  logger->always("blubbedi");
+
+  logger->setPattern("&pre&sep&pid&sep&lev&sep&msg&end");
+  logger->always("blü");
+
   delete logger;
 
-  test_logger();
+  test_logger(cfg);
 
-  // delete cfg;
+  delete cfg;
 
 
   return 0;

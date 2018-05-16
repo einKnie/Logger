@@ -17,25 +17,25 @@ class Logger {
 public:
 
   /// Enums
-  enum { EErr = 0, ENoErr };    ///< return values
-  typedef enum { ELogDisable,   ///< no logging
-                 ELogError,     ///< just errors
-                 ELogWarn,      ///< errors and warnings
-                 ELogVerbose,   ///< errors, warnings, and notices
-                 ELogDebug      ///< errors, warnings, notices, and debug messages
-               } level_e;
+  enum { EErr = 0, ENoErr };        ///< return values
+  typedef enum { ELogDisable,       ///< no logging
+                 ELogError,         ///< just errors
+                 ELogWarn,          ///< errors and warnings
+                 ELogVerbose,       ///< errors, warnings, and notices
+                 ELogDebug          ///< errors, warnings, notices, and debug messages
+               } level_e;           ///< loglevel
 
-  typedef enum { ELogStyleNone,    ///< print just the plain message
-                 ELogStyleMinimal, ///< output minimalistic logging. example: "warning | <message>"
-                 ELogStyleDefault, ///< time && level
-                 ELogStyleVerbose, ///< output verbose logging. example: "PID <pid> | WARNING | <message>"
-                 ELogStyleUser     ///< user-defined style
-               } style_e;
+  typedef enum { ELogStyleNone,     ///< print just the plain message
+                 ELogStyleMinimal,  ///< output minimalistic logging
+                 ELogStyleDefault,  ///< time && level
+                 ELogStyleVerbose,  ///< output verbose logging
+                 ELogStyleUser      ///< user-defined style
+               } style_e;           ///< logstyle
 
   /// Constants
   static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
   static const int   CMaxMsgLen         = 500;        ///< max logger line length
-  static const int   CMaxHeaderLen      = 80;
+  static const int   CMaxHeaderLen      = 100;
   static const int   CMaxPrefixLen      = 10;
   static const int   CMaxSepLen         = 10;
   static const int   CMaxPatternLen     = 80;
@@ -46,7 +46,6 @@ public:
   static const char *CLogMsgNotice;
   static const char *CLogMsgDebug;
   static const char *CLogMsgAlways;
-  static const char *CLogPatternDefault;
   static const level_e CLogLevelDefault = ELogDebug;
   static const style_e CLogStyleDefault = ELogStyleNone;
 
@@ -54,31 +53,25 @@ public:
   typedef struct cfgLog {
 
     enum {
-      ELevelDefault = 0,  ///> default level string, e.g. Notice
-      ELevelLower,        ///> lower case level string, e.g. notice
-      ELevelUpper         ///> upper case level string, e.g. NOTICE
+      ELevelDefault = 0,  ///< default level string, e.g. Notice
+      ELevelLower,        ///< lower case level string, e.g. notice
+      ELevelUpper         ///< upper case level string, e.g. NOTICE
     };
 
-    Logger::level_e logLevel;              ///> loglevel
-    Logger::style_e logStyle;              ///> logstyle
+    Logger::level_e logLevel;              ///< loglevel
+    Logger::style_e logStyle;              ///< logstyle
+    bool logToFile;                        ///< flag for file logging
 
-    bool printNewline;                     ///> flag for auto newline at end of msg
-    bool printPrefix;                      ///> flag for prefix
-    bool logToFile;                        ///> flag for file logging
+    char logfile[Logger::CMaxPathLen];     ///< path to logfile
+    char prefix[Logger::CMaxPrefixLen];    ///< set prefix
+    char postfix[Logger::CMaxPrefixLen];   ///< postfix, must include newline if needed
+    char separator[Logger::CMaxSepLen];    ///< set separator
 
-    char logfile[Logger::CMaxPathLen];     ///> path to logfile
-    char prefix[Logger::CMaxPrefixLen];    ///> set prefix
-    char postfix[Logger::CMaxPrefixLen];
-    char separator[Logger::CMaxSepLen];    ///> set separator
-
-    char pattern[Logger::CMaxPatternLen];
-    char userDefinedPatternItem[Logger::CMaxPatternItemLen];
+    char pattern[Logger::CMaxPatternLen];  ///< log msg pattern
+    char userDefinedPatternItem[Logger::CMaxPatternItemLen];  ///< user defined pattern item
 
     // advanced configuration
-    bool printTime;                        ///> print log time
-    bool printPid;                         ///> print process pid
-    bool printLevel;                       ///> print logmsg level
-    int  logLevelCase;                     ///> print level in default, lower- or uppercase
+    int  logLevelCase;                     ///< print level in default, lower- or uppercase
 
 
     /// Constructor
@@ -87,8 +80,6 @@ public:
       logLevel = Logger::CLogLevelDefault;
       logStyle = Logger::CLogStyleDefault;
 
-      printNewline = true;
-      printPrefix  = false;
       logToFile = false;
 
       memset(prefix, '\0', sizeof(prefix));
@@ -97,13 +88,9 @@ public:
       memset(separator, '\0', sizeof(separator));
       memset(pattern, '\0', sizeof(pattern));
       memset(userDefinedPatternItem, '\0', sizeof(userDefinedPatternItem));
-      strncpy(pattern, Logger::CLogPatternDefault, sizeof(pattern));
       strcpy(separator, " | ");
       strcpy(postfix, "\n");
 
-      printTime     = false;
-      printPid      = false;
-      printLevel    = true;
       logLevelCase  = ELevelDefault;
     }
 
@@ -111,9 +98,6 @@ public:
 
   /// Default constructor
   Logger();
-
-  /// Constructor with logfile
-  // Logger(const char *logfile);
 
   /// Constructor with CfgLog
   Logger(CfgLog *cfg);
@@ -133,10 +117,13 @@ public:
   void debug(const char *fmt, ...);
   void always(const char *fmt, ...);
 
-  level_e getLevel();
-  style_e getStyle();
+  level_e getLevel(void);
+  style_e getStyle(void);
   void setLevel(level_e level);
   void setStyle(style_e style);
+
+  int setPattern(const char *pattern);
+  char *getPattern(void);
 
 private:
 
@@ -189,8 +176,6 @@ private:
   /// @param[in] fmt the msg payload
   /// @param[in] level msg level
   void constructMsg(char *msg, const char *fmt, const char *level);
-
-  void constructPatternMsg(char *msg, const char *fmt, const char *level);
 
 };
 
