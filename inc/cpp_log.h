@@ -1,7 +1,6 @@
 #ifndef _CPP_LOGGER_H_
 #define _CPP_LOGGER_H_
 
-#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <linux/limits.h>
@@ -17,20 +16,20 @@ class Logger {
 public:
 
   /// Enums
-  enum { EErr = 0, ENoErr };        ///< return values
-  typedef enum { ELogDisable = 0,   ///< no logging
-                 ELogError,         ///< just errors
-                 ELogWarn,          ///< errors and warnings
-                 ELogVerbose,       ///< errors, warnings, and notices
-                 ELogDebug          ///< errors, warnings, notices, and debug messages
-               } level_e;           ///< loglevel
+  enum { EErr = 0, ENoErr };            ///< return values
+  typedef enum { ELogDisable = 0,       ///< no logging
+                 ELogError,             ///< just errors
+                 ELogWarn,              ///< errors and warnings
+                 ELogVerbose,           ///< errors, warnings, and notices
+                 ELogDebug              ///< errors, warnings, notices, and debug messages
+               } level_e;               ///< loglevel
 
-  typedef enum { ELogProfileNone  = 0,///< print just the plain message
-                 ELogProfileMinimal,  ///< output minimalistic logging
-                 ELogProfileDefault,  ///< time && level
-                 ELogProfileVerbose,  ///< output verbose logging
-                 ELogProfileUser      ///< user-defined style
-               } profile_e;           ///< logstyle
+  typedef enum { ELogProfileNone  = 0,  ///< print just the plain message
+                 ELogProfileMinimal,    ///< output minimalistic logging
+                 ELogProfileDefault,    ///< time && level
+                 ELogProfileVerbose,    ///< output verbose logging
+                 ELogProfileUser        ///< user-defined style
+               } profile_e;             ///< logstyle
 
   /// Constants
   static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
@@ -45,6 +44,7 @@ public:
   static const char *CLogMsgNotice;                   ///< Notice string
   static const char *CLogMsgDebug;                    ///< Debug string
   static const char *CLogMsgAlways;                   ///< Always string
+
   static const level_e CLogLevelDefault = ELogDebug;            ///< default loglevel value
   static const profile_e CLogProfileDefault = ELogProfileNone;  ///< default profile
 
@@ -58,7 +58,7 @@ public:
     };
 
     Logger::level_e logLevel;              ///< loglevel
-    Logger::profile_e profile;          ///< logstyle
+    Logger::profile_e profile;             ///< logstyle
     bool logToFile;                        ///< flag for file logging
     int  logLevelCase;                     ///< print level in default, lower- or uppercase
 
@@ -89,7 +89,6 @@ public:
       // set defaults
       strcpy(separator, " | ");
       strcpy(postfix, "\n");
-
     }
 
   } CfgLog;
@@ -127,6 +126,10 @@ public:
 
 private:
 
+  #define LOG(...) \
+    (void)vfprintf(m_fd, __VA_ARGS__); \
+    (void)fflush(m_fd); \
+
   typedef enum {
         EPatInvalid = 0,
         EPatSeparator,
@@ -141,7 +144,6 @@ private:
 
   CfgLog *m_cfg;             ///< logger config
   FILE *m_fd;                ///< file descriptor
-  va_list m_args;            ///< current fmt arguments
   bool m_removeCfg;          ///< flag to remove cfgLog in case it was created at ctor
   pattern_e m_pattern[CMaxPatternItems];  ///< currently set pattern array
 
@@ -155,6 +157,7 @@ private:
 
   /// Initialize a default logstyle
   /// sets all style setting to defaults depending on logstyle set
+  /// @param [in] profile a default profile
   void initProfile(profile_e profile);
 
   void addUsr(char *msg);
@@ -165,10 +168,6 @@ private:
   void addPostfix(char *msg);
   void addPrefix(char *msg);
   void addSeparator(char *msg);
-
-  /// Print a log message
-  /// @param [in] msg to print
-  void log(const char *msg);
 
   /// Construct a log message
   /// @param[in,out] msg contains the contructed log msg after call

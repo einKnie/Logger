@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdarg.h>
 
 extern "C" {
   #include "utils.h"
@@ -125,6 +126,7 @@ void Logger::initProfile(profile_e profile) {
 void Logger::error(const char *fmt, ...) {
 
   char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
 
   if (m_fd == NULL) return;
 
@@ -138,14 +140,15 @@ void Logger::error(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgError);
-  va_start(m_args, fmt);
-  log(msg);
-  va_end(m_args);
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
 }
 
 void Logger::warning(const char *fmt, ...) {
 
   char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
 
   if (m_fd == NULL) return;
 
@@ -159,14 +162,15 @@ void Logger::warning(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgWarning);
-  va_start(m_args, fmt);
-  log(msg);
-  va_end(m_args);
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
 }
 
 void Logger::notice(const char *fmt, ...) {
 
   char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
 
   if (m_fd == NULL) return;
 
@@ -180,14 +184,15 @@ void Logger::notice(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgNotice);
-  va_start(m_args, fmt);
-  log(&msg[0]);
-  va_end(m_args);
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
 }
 
 void Logger::debug(const char *fmt, ...) {
 
   char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
 
   if (m_fd == NULL) return;
 
@@ -201,26 +206,22 @@ void Logger::debug(const char *fmt, ...) {
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgDebug);
-  va_start(m_args, fmt);
-  log(msg);
-  va_end(m_args);
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
 }
 
 void Logger::always(const char *fmt, ...) {
 
   char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
 
   if (m_fd == NULL) return;
 
   constructMsg(msg, fmt, Logger::CLogMsgAlways);
-  va_start(m_args, fmt);
-  log(msg);
-  va_end(m_args);
-}
-
-void Logger::log(const char *msg) {
-  (void)vfprintf(m_fd, msg, m_args);
-  (void)fflush(m_fd);
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
 }
 
 Logger::level_e Logger::getLevel() {
