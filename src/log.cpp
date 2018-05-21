@@ -8,23 +8,31 @@ extern "C" {
   #include "utils.h"
 }
 
-// default logprofile patterns
+/// TODO: use color mode!!!
+/// if color mode enabled, print the more serious levels in red (e.g.)
+// OR let  user specifiy which colors to use (?)
+
+/// default logprofile patterns
 char default_patterns[][Logger::CMaxPatternLen] =
                     {"&msg&end",                              // ELogProfileNone
                      "&pre&lev&sep&msg&end",                  // ELogProfileMinimal
                      "&pre&tim&sep&lev&sep&msg&end",          // ELogProfileDefault
                      "&pre&pid&sep&tim&sep&lev&sep&msg&end",  // ELogProfileVerbose
                     };
-// default level caase config for default profiles
+/// default level caase config for default profiles
 int default_level_cases[] = { Logger::CfgLog::ELevelCaseLower,    // ELogProfileNone
                               Logger::CfgLog::ELevelCaseLower,    // ELogProfileMinimal
                               Logger::CfgLog::ELevelCaseDefault,  // ELogProfileDefault
                               Logger::CfgLog::ELevelCaseUpper     // ELogProfileVerbose
                             };
 
+const char *Logger::CLogMsgEmergency = "Emerg";
+const char *Logger::CLogMsgAlert     = "Alert";
+const char *Logger::CLogMsgCritical  = "Crit";
 const char *Logger::CLogMsgError     = "Error";
 const char *Logger::CLogMsgWarning   = "Warning";
 const char *Logger::CLogMsgNotice    = "Notice";
+const char *Logger::CLogMsgInfo      = "Info";
 const char *Logger::CLogMsgDebug     = "Debug";
 const char *Logger::CLogMsgAlways    = "Always";
 
@@ -97,6 +105,7 @@ void Logger::init() {
     m_fd = stdout;
   }
 
+  // set pattern
   if (m_cfg->profile == ELogProfileUser) {
       if (initPattern(m_cfg->pattern) == ENoErr) {
         return;
@@ -123,6 +132,92 @@ void Logger::initProfile(profile_e profile) {
   }
 }
 
+void Logger::emergency(const char *fmt, ...) {
+
+  char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
+
+  if (m_fd == NULL) return;
+  // emergencies are always logged, regardless of log level
+
+  constructMsg(msg, fmt, Logger::CLogMsgEmergency);
+
+  if (m_cfg->useColor) {
+    char buf[Logger::CMaxMsgLen];
+    strcpy(buf, msg);
+    sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
+  }
+
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
+}
+
+void Logger::alert(const char *fmt, ...) {
+
+  char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
+
+  if (m_fd == NULL) return;
+
+  // TODO: eigentlich schwachsinning, ich kann genausogut abfragen ob loglevel >= Alert
+  switch(m_cfg->logLevel) {
+    case ELogEmergency: return;
+    case ELogAlert:     break;
+    case ELogCritical:  break;
+    case ELogError:     break;
+    case ELogWarn:      break;
+    case ELogNotice:    break;
+    case ELogInfo:      break;
+    case ELogDebug:     break;
+    default: return;
+  }
+
+  constructMsg(msg, fmt, Logger::CLogMsgAlert);
+
+  if (m_cfg->useColor) {
+    char buf[Logger::CMaxMsgLen];
+    strcpy(buf, msg);
+    sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
+  }
+
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
+}
+
+void Logger::critical(const char *fmt, ...) {
+
+  char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
+
+  if (m_fd == NULL) return;
+
+  switch(m_cfg->logLevel) {
+    case ELogEmergency: return;
+    case ELogAlert:     return;
+    case ELogCritical:  break;
+    case ELogError:     break;
+    case ELogWarn:      break;
+    case ELogNotice:    break;
+    case ELogInfo:      break;
+    case ELogDebug:     break;
+    default: return;
+  }
+
+  constructMsg(msg, fmt, Logger::CLogMsgCritical);
+
+  if (m_cfg->useColor) {
+    char buf[Logger::CMaxMsgLen];
+    strcpy(buf, msg);
+    sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
+  }
+
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
+}
+
 void Logger::error(const char *fmt, ...) {
 
   char msg[Logger::CMaxMsgLen]       = {0};
@@ -131,11 +226,14 @@ void Logger::error(const char *fmt, ...) {
   if (m_fd == NULL) return;
 
   switch(m_cfg->logLevel) {
-    case ELogDisable: return;
-    case ELogError:   break;
-    case ELogWarn   : break;
-    case ELogVerbose: break;
-    case ELogDebug:   break;
+    case ELogEmergency: return;
+    case ELogAlert:     return;
+    case ELogCritical:  return;
+    case ELogError:     break;
+    case ELogWarn:      break;
+    case ELogNotice:    break;
+    case ELogInfo:      break;
+    case ELogDebug:     break;
     default: return;
   }
 
@@ -153,11 +251,14 @@ void Logger::warning(const char *fmt, ...) {
   if (m_fd == NULL) return;
 
   switch(m_cfg->logLevel) {
-    case ELogDisable: return;
-    case ELogError:   return;
-    case ELogWarn   : break;
-    case ELogVerbose: break;
-    case ELogDebug:   break;
+    case ELogEmergency: return;
+    case ELogAlert:     return;
+    case ELogCritical:  return;
+    case ELogError:     return;
+    case ELogWarn:      break;
+    case ELogNotice:    break;
+    case ELogInfo:      break;
+    case ELogDebug:     break;
     default: return;
   }
 
@@ -175,15 +276,43 @@ void Logger::notice(const char *fmt, ...) {
   if (m_fd == NULL) return;
 
   switch(m_cfg->logLevel) {
-    case ELogDisable: return;
-    case ELogError:   return;
-    case ELogWarn   : return;
-    case ELogVerbose: break;
-    case ELogDebug:   break;
+    case ELogEmergency: return;
+    case ELogAlert:     return;
+    case ELogCritical:  return;
+    case ELogError:     return;
+    case ELogWarn:      return;
+    case ELogNotice:    break;
+    case ELogInfo:      break;
+    case ELogDebug:     break;
     default: return;
   }
 
   constructMsg(msg, fmt, Logger::CLogMsgNotice);
+  va_start(args, fmt);
+  LOG(msg, args);
+  va_end(args);
+}
+
+void Logger::info(const char *fmt, ...) {
+
+  char msg[Logger::CMaxMsgLen]       = {0};
+  va_list args;
+
+  if (m_fd == NULL) return;
+
+  switch(m_cfg->logLevel) {
+    case ELogEmergency: return;
+    case ELogAlert:     return;
+    case ELogCritical:  return;
+    case ELogError:     return;
+    case ELogWarn:      return;
+    case ELogNotice:    return;
+    case ELogInfo:      break;
+    case ELogDebug:     break;
+    default: return;
+  }
+
+  constructMsg(msg, fmt, Logger::CLogMsgInfo);
   va_start(args, fmt);
   LOG(msg, args);
   va_end(args);
@@ -197,11 +326,14 @@ void Logger::debug(const char *fmt, ...) {
   if (m_fd == NULL) return;
 
   switch(m_cfg->logLevel) {
-    case ELogDisable: return;
-    case ELogError:   return;
-    case ELogWarn   : return;
-    case ELogVerbose: return;
-    case ELogDebug:   break;
+    case ELogEmergency: return;
+    case ELogAlert:     return;
+    case ELogCritical:  return;
+    case ELogError:     return;
+    case ELogWarn:      return;
+    case ELogNotice:    return;
+    case ELogInfo:      return;
+    case ELogDebug:     break;
     default: return;
   }
 
@@ -285,29 +417,31 @@ int Logger::initPattern(const char *pattern) {
       PRINT_DEBUG("got pattern identifier: %s\n", tmp);
 
       if (strncmp(tmp, "tim", 3) == 0) {
-        PRINT_DEBUG("Got time pattern\n");
         m_pattern[j] = EPatTime;
       } else if (strncmp(tmp, "lev", 3) == 0) {
-        PRINT_DEBUG("Got level pattern\n");
         m_pattern[j] = EPatLevel;
       } else if (strncmp(tmp, "sep", 3) == 0) {
-        PRINT_DEBUG("Got separator pattern\n");
         m_pattern[j] = EPatSeparator;
       } else if (strncmp(tmp, "pid", 3) == 0) {
-        PRINT_DEBUG("Got pid pattern\n");
         m_pattern[j] = EPatPID;
       } else if (strncmp(tmp, "msg", 3) == 0) {
-        PRINT_DEBUG("Got msg pattern\n");
         m_pattern[j] = EPatMsg;
       } else if (strncmp(tmp, "pre", 3) == 0) {
-        PRINT_DEBUG("Got msg pattern\n");
         m_pattern[j] = EPatPrefix;
       } else if (strncmp(tmp, "end", 3) == 0) {
-        PRINT_DEBUG("Got msg pattern\n");
         m_pattern[j] = EPatEnd;
-      } else if (strncmp(tmp, "usr", 3) == 0) {
-        PRINT_DEBUG("Got msg pattern\n");
-        m_pattern[j] = EPatUser;
+      // } else if (strncmp(tmp, "us1", 3) == 0) {
+      //   m_pattern[j] = EPatUser1;
+      // } else if (strncmp(tmp, "us2", 3) == 0) {
+      //   m_pattern[j] = EPatUser2;
+      } else if (strncmp(tmp, "us", 2) == 0) {
+        // get number from string, add user pattern of number
+        int no = findNextNumeric(tmp, NULL);
+        PRINT_DEBUG("Got user pattern %d\n", no);
+        // TODO:
+        // maybe set EUsrBase + userPatternNo && calc back to no @ construct ?
+        // m_pattern must be non-typed for this to work
+        m_pattern[j] = EPatUsr + no;
       } else {
         PRINT_DEBUG("got nothing...\n");
         return EErr;
@@ -338,10 +472,9 @@ void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
       case EPatPID:        addPID(buf); break;
       case EPatLevel:      addLevel(buf, level); break;
       case EPatMsg:        addMsg(buf, fmt); break;
-      case EPatUser:       addUsr(buf); break;
       case EPatTime:       addTime(buf); break;
-      case EPatInvalid:
-      default: if (i == 0) return; else break;
+      case EPatInvalid:    if (i == 0) return; else break;
+      default: int no =    m_pattern[i] - EPatUsr; addUsr(buf, no); // user defined pattern
     }
   }
 
@@ -349,6 +482,19 @@ void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
     PRINT_DEBUG("Constructed message: %s\n", buf);
     strncpy(msg, buf, CMaxMsgLen);
   }
+}
+
+int Logger::addUsr(char *msg, int no) {
+  CfgLog::UsrPattern *tmp = m_cfg->usrPattern;
+  if (m_cfg->usrPattern != NULL) {
+    do {
+      if (no == tmp->nr) {
+        strcat(msg, tmp->pat);
+        return ENoErr;
+      } else {tmp = tmp->next;}
+    } while (tmp != NULL);
+  }
+  return EErr;
 }
 
 void Logger::addSeparator(char *msg) {
@@ -399,8 +545,4 @@ void Logger::addTime(char *msg) {
 
 void Logger::addMsg(char *msg, const char *fmt) {
   strcat(msg, fmt);
-}
-
-void Logger::addUsr(char *msg) {
-  strcat(msg, m_cfg->userDefinedPatternItem);
 }
