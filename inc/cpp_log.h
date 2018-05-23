@@ -5,7 +5,7 @@
 #include <string.h>
 #include <linux/limits.h>
 
-#define DEBUG
+// #define DEBUG
 #if defined DEBUG
   #define PRINT_DEBUG(...) printf(__VA_ARGS__)
 #else
@@ -58,7 +58,6 @@ public:
 
   /// Logger configuration
   typedef struct cfgLog {
-    /// TODO: allow user to set an arbitrary number of user defined pattern items
 
     typedef struct usrPattern {
       char pat[Logger::CMaxPatternItemLen];
@@ -98,15 +97,14 @@ public:
     color_e color;
     int  logLevelCase;                     ///< print level in default, lower- or uppercase
 
+    bool useUsrPattern;                    ///< use user defined patterns
+    UsrPattern *usrPattern;                ///< liked list of user patterns
+
     char logfile[Logger::CMaxPathLen];     ///< path to logfile
     char prefix[Logger::CMaxPrefixLen];    ///< set prefix
     char postfix[Logger::CMaxPrefixLen];   ///< postfix, must include newline if needed
     char separator[Logger::CMaxSepLen];    ///< set separator
-
     char pattern[Logger::CMaxPatternLen];  ///< log msg pattern
-
-    bool useUsrPattern;                    ///< use user defined patterns
-    UsrPattern *usrPattern;                ///< liked list of user patterns
 
     /// Constructor
     cfgLog() {
@@ -135,7 +133,7 @@ public:
     }
 
     ~cfgLog() {
-      if (usrPattern != NULL) {
+      if (usrPattern) {
         UsrPattern *tmp = usrPattern;
         UsrPattern *ntmp = tmp;
         do {
@@ -143,6 +141,20 @@ public:
           delete tmp;
           tmp = ntmp;
         } while (tmp != NULL);
+      }
+    }
+
+    //TODO: add method to add a user defined pattern item.
+    // pattern items shouldn't be allocated outside of CfgLog!
+
+    void addUsrPattern(int nr, const char *pat) {
+      // find end of pattern list
+      UsrPattern *tmp = NULL;
+      if (!usrPattern) usrPattern = new UsrPattern(nr, pat);
+      else {
+        tmp = usrPattern;
+        while (tmp->next != NULL) {tmp = tmp->next;}
+        tmp->next = new UsrPattern(nr, pat);
       }
     }
 
@@ -205,7 +217,7 @@ private:
   CfgLog  *m_cfg;                         ///< logger config
   FILE    *m_fd;                          ///< file descriptor
   bool     m_removeCfg;                   ///< flag to remove cfgLog in case it was created at ctor
-    int    m_pattern[CMaxPatternItems];   ///< currently set pattern array
+  int      m_pattern[CMaxPatternItems];   ///< currently set pattern array
 
   /// Initialize logger
   void init(void);

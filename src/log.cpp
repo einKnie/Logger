@@ -8,9 +8,11 @@ extern "C" {
   #include "utils.h"
 }
 
+/// TODO: pretty sure strcat is problematic b/c null termination.
+
 /// TODO: use color mode!!!
 /// if color mode enabled, print the more serious levels in red (e.g.)
-// OR let  user specifiy which colors to use (?)
+/// OR let  user specifiy which colors to use (?)
 
 /// default logprofile patterns
 char default_patterns[][Logger::CMaxPatternLen] =
@@ -430,10 +432,6 @@ int Logger::initPattern(const char *pattern) {
         m_pattern[j] = EPatPrefix;
       } else if (strncmp(tmp, "end", 3) == 0) {
         m_pattern[j] = EPatEnd;
-      // } else if (strncmp(tmp, "us1", 3) == 0) {
-      //   m_pattern[j] = EPatUser1;
-      // } else if (strncmp(tmp, "us2", 3) == 0) {
-      //   m_pattern[j] = EPatUser2;
       } else if (strncmp(tmp, "us", 2) == 0) {
         // get number from string, add user pattern of number
         int no = findNextNumeric(tmp, NULL);
@@ -461,7 +459,7 @@ int Logger::initPattern(const char *pattern) {
 }
 
 void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
-  char buf[CMaxMsgLen] = {0};
+  char buf[CMaxMsgLen] = {'\0'};
 
   for (int i = 0; i < CMaxPatternItems; i++) {
     PRINT_DEBUG("item %d: %d\n", i, m_pattern[i]);
@@ -480,13 +478,13 @@ void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
 
   if (strlen(buf) >= strlen(fmt)) {
     PRINT_DEBUG("Constructed message: %s\n", buf);
-    strncpy(msg, buf, CMaxMsgLen);
+    memcpy(msg, buf, CMaxMsgLen);
   }
 }
 
 int Logger::addUsr(char *msg, int no) {
-  CfgLog::UsrPattern *tmp = m_cfg->usrPattern;
-  if (m_cfg->usrPattern != NULL) {
+  if (m_cfg->usrPattern) {
+    CfgLog::UsrPattern *tmp = m_cfg->usrPattern;
     do {
       if (no == tmp->nr) {
         strcat(msg, tmp->pat);

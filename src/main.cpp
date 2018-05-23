@@ -13,12 +13,11 @@ int main(int argc, const char *argv[]) {
   strcpy(cfg->postfix, " -\n");
   cfg->useColor = true;
 
-  cfg->usrPattern->nr = 0;
-  strcpy(cfg->usrPattern->pat, "~~");
-  cfg->usrPattern->next = new Logger::CfgLog::UsrPattern(1, " §§ ");
-  cfg->usrPattern->next->next = new Logger::CfgLog::UsrPattern(2, " ** ");
-  // cfg->logToFile = true;
-  // strcpy(cfg->logfile, "./file.log");
+  cfg->useUsrPattern = true;
+  cfg->addUsrPattern(0, "??");
+  cfg->addUsrPattern(1, "blülülü");
+  cfg->addUsrPattern(2, "§*§");
+
   strncpy(cfg->pattern, "&pre&lev&sep&us0&tim&us1&sep&msg&end", sizeof(cfg->pattern));
   cfg->profile = Logger::ELogProfileUser;
 
