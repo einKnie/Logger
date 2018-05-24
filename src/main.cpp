@@ -17,8 +17,9 @@ int main(int argc, const char *argv[]) {
   cfg->addUsrPattern(0, "??");
   cfg->addUsrPattern(1, "blülülü");
   cfg->addUsrPattern(2, "§*§");
+  cfg->addUsrPattern(42, "The answer to life, the universe, and everything");
 
-  strncpy(cfg->pattern, "&pre&lev&sep&us0&tim&us1&sep&msg&end", sizeof(cfg->pattern));
+  strncpy(cfg->pattern, "&pre&lev&sep&us0&tim&us2&sep&msg&end", sizeof(cfg->pattern));
   cfg->profile = Logger::ELogProfileUser;
 
   Logger *logger = new Logger(cfg);

@@ -17,22 +17,24 @@ public:
 
   /// Enums
   enum { EErr = 0, ENoErr };            ///< return values
-  typedef enum { ELogEmergency = 0,     ///< always && emergency msgs
-                 ELogAlert,             ///< always, emergency && alert msgs
-                 ELogCritical,          ///< always, emerg, alert && critical msgs
-                 ELogError,             ///< always, emerg, alert, crit && errors
-                 ELogWarn,              ///< always, emerg, alert, crit, errors && warnings
-                 ELogNotice,            ///< always, emerg, alert, crit, errors, warnings && notices
-                 ELogInfo,              ///< always, emerg, alert, crit, errors, warnings, notices && infos
-                 ELogDebug              ///< always, emerg, alert, crit, errors, warnings, notices, infos && debug msgs
-               } level_e;               ///< loglevel
+  typedef enum {
+    ELogEmergency = 0,     ///< always && emergency msgs
+    ELogAlert,             ///< always, emergency && alert msgs
+    ELogCritical,          ///< always, emerg, alert && critical msgs
+    ELogError,             ///< always, emerg, alert, crit && errors
+    ELogWarn,              ///< always, emerg, alert, crit, errors && warnings
+    ELogNotice,            ///< always, emerg, alert, crit, errors, warnings && notices
+    ELogInfo,              ///< always, emerg, alert, crit, errors, warnings, notices && infos
+    ELogDebug              ///< always, emerg, alert, crit, errors, warnings, notices, infos && debug msgs
+  } level_e;               ///< loglevel
 
-  typedef enum { ELogProfileNone  = 0,  ///< print just the plain message
-                 ELogProfileMinimal,    ///< output minimalistic logging
-                 ELogProfileDefault,    ///< time && level
-                 ELogProfileVerbose,    ///< output verbose logging
-                 ELogProfileUser        ///< user-defined style
-               } profile_e;             ///< logstyle
+  typedef enum {
+    ELogProfileNone  = 0,  ///< print just the plain message
+    ELogProfileMinimal,    ///< output minimalistic logging
+    ELogProfileDefault,    ///< time && level
+    ELogProfileVerbose,    ///< output verbose logging
+    ELogProfileUser        ///< user-defined style
+  } profile_e;             ///< logstyle
 
   /// Constants
   static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
@@ -64,10 +66,12 @@ public:
       int nr;
       struct usrPattern *next;
 
-      usrPattern(int nr = 0, const char *pattern = "") {
+      usrPattern(int nr = 0, const char *pattern = NULL) {
         this->nr = nr;
         memset(pat, 0, sizeof(pat));
-        strncpy(pat, pattern, sizeof(pat));
+        if (pattern) {
+          strncpy(pat, pattern, sizeof(pat) - 1);
+        }
 
         next = NULL;
       }
@@ -157,7 +161,6 @@ public:
         tmp->next = new UsrPattern(nr, pat);
       }
     }
-
   } CfgLog;
 
   /// Default constructor

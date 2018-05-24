@@ -459,7 +459,7 @@ int Logger::initPattern(const char *pattern) {
 }
 
 void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
-  char buf[CMaxMsgLen] = {'\0'};
+  char buf[CMaxMsgLen] = {0};
 
   for (int i = 0; i < CMaxPatternItems; i++) {
     PRINT_DEBUG("item %d: %d\n", i, m_pattern[i]);
