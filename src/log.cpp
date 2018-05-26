@@ -457,16 +457,22 @@ void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
 
   for (int i = 0; i < CfgLog::CMaxPatternItems; i++) {
     PRINT_DEBUG("item %d: %d\n", i, m_pattern[i]);
-    switch (m_pattern[i]) {
-      case EPatSeparator:  addSeparator(buf); break;
-      case EPatPrefix:     addPrefix(buf); break;
-      case EPatEnd:        addPostfix(buf); break;
-      case EPatPID:        addPID(buf); break;
-      case EPatLevel:      addLevel(buf, level); break;
-      case EPatMsg:        addMsg(buf, fmt); break;
-      case EPatTime:       addTime(buf); break;
-      case EPatInvalid:    if (i == 0) return; else break;
-      default: int no =    m_pattern[i] - EPatUsr; addUsr(buf, no); // user defined pattern
+
+    if (m_pattern[i] > EPatUsr) {
+      int no = m_pattern[i] - EPatUsr;
+      addUsr(buf, no); // user defined pattern
+    } else {
+      switch (m_pattern[i]) {
+        case EPatSeparator:  addSeparator(buf); break;
+        case EPatPrefix:     addPrefix(buf); break;
+        case EPatEnd:        addPostfix(buf); break;
+        case EPatPID:        addPID(buf); break;
+        case EPatLevel:      addLevel(buf, level); break;
+        case EPatMsg:        addMsg(buf, fmt); break;
+        case EPatTime:       addTime(buf); break;
+        case EPatInvalid:    if (i == 0) return; else break;
+        default:             return;
+      }
     }
   }
 

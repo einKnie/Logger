@@ -13,6 +13,10 @@
 #include <string.h>
 #include <linux/limits.h>
 
+// TODO:
+// think of everything a user might want to configure
+// and define ONE way to do so.
+
 // #define DEBUG
 #if defined DEBUG
   #define PRINT_DEBUG(...) printf(__VA_ARGS__)
