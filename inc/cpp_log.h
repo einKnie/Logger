@@ -1,3 +1,11 @@
+///        __
+///       / /   ___   __ _  __ _  ___ _ __
+///      / /   / _ \ / _` |/ _` |/ _ \ '__|
+///     / /___| (_) | (_| | (_| |  __/ |
+///     \____/ \___/ \__, |\__, |\___|_|
+///                  |___/ |___/        v0.1
+///      <einKnie@gmx.at>
+
 #ifndef _CPP_LOGGER_H_
 #define _CPP_LOGGER_H_
 
@@ -12,11 +20,35 @@
   #define PRINT_DEBUG(...)
 #endif
 
-class Logger {
+typedef struct cfgLog {
+
+  /// Constants
+  static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
+  static const int   CMaxMsgLen         = 500;        ///< max logger line length
+  static const int   CMaxPrefixLen      = 10;         ///< maximum length of the msg prefix
+  static const int   CMaxSepLen         = 10;         ///< maximum length of the separator
+  static const int   CMaxPatternItems   = 10;         ///< maximum number of pattern items which may be set
+  static const int   CMaxPatternItemLen = 10;         ///< maximum length of a pattern item
+  static const int   CMaxPatternIdLen   = 5;          ///< max length of a pattern identifier
+  static const int   CMaxPatternLen     = CMaxPatternItems * CMaxPatternIdLen + 1; ///< 10*4 characters + null termination
+
+  static const char *CLogMsgEmergency;                ///< Emergency string
+  static const char *CLogMsgAlert;                    ///< Alert string
+  static const char *CLogMsgCritical;                 ///< Critical string
+  static const char *CLogMsgError;                    ///< Error string
+  static const char *CLogMsgWarning;                  ///< Warning string
+  static const char *CLogMsgNotice;                   ///< Notice string
+  static const char *CLogMsgInfo;                     ///< Info string
+  static const char *CLogMsgDebug;                    ///< Debug string
+  static const char *CLogMsgAlways;                   ///< Always string
+
+} cfgLog_t;
+
+
+class CfgLog : public cfgLog_t {
 public:
 
   /// Enums
-  enum { EErr = 0, ENoErr };            ///< return values
   typedef enum {
     ELogEmergency = 0,     ///< always && emergency msgs
     ELogAlert,             ///< always, emergency && alert msgs
@@ -36,132 +68,76 @@ public:
     ELogProfileUser        ///< user-defined style
   } profile_e;             ///< logstyle
 
-  /// Constants
-  static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
-  static const int   CMaxMsgLen         = 500;        ///< max logger line length
-  static const int   CMaxPrefixLen      = 10;         ///< maximum length of the msg prefix
-  static const int   CMaxSepLen         = 10;         ///< maximum length of the separator
-  static const int   CMaxPatternItems   = 10;         ///< maximum number of pattern items which may be set
-  static const int   CMaxPatternItemLen = 10;         ///< maximum length of a pattern item
-  static const int   CMaxPatternLen     = CMaxPatternItems * 4 + 1; ///< 10*4 characters + null termination
+  enum {
+    ELevelCaseDefault = 0,  ///< default level string, e.g. Notice
+    ELevelCaseLower,        ///< lower case level string, e.g. notice
+    ELevelCaseUpper         ///< upper case level string, e.g. NOTICE
+  };
 
-  static const char *CLogMsgEmergency;                ///< Emergency string
-  static const char *CLogMsgAlert;                    ///< Alert string
-  static const char *CLogMsgCritical;                 ///< Critical string
-  static const char *CLogMsgError;                    ///< Error string
-  static const char *CLogMsgWarning;                  ///< Warning string
-  static const char *CLogMsgNotice;                   ///< Notice string
-  static const char *CLogMsgInfo;                     ///< Info string
-  static const char *CLogMsgDebug;                    ///< Debug string
-  static const char *CLogMsgAlways;                   ///< Always string
+  typedef enum {
+    EColorBlack = 30,
+    EColorRed,
+    EColorGreen,
+    EColorYellow,
+    EColorBlue,
+    EColorMagenta,
+    EColorCyan,
+    EColorWhite
+  } color_e;                ///< terminal color values
 
-  static const level_e CLogLevelDefault = ELogDebug;            ///< default loglevel value
+  static const level_e CLogLevelDefault     = ELogDebug;        ///< default loglevel value
   static const profile_e CLogProfileDefault = ELogProfileNone;  ///< default profile
 
-  /// Logger configuration
-  typedef struct cfgLog {
+  /// Members
+  level_e logLevel;               ///< loglevel
+  profile_e profile;              ///< logstyle
+  bool logToFile;                 ///< flag for file logging
+  bool useColor;                  ///< enable colorful logging
+  bool useUsrPattern;             ///< use user defined patterns
 
-    typedef struct usrPattern {
-      char pat[Logger::CMaxPatternItemLen];
-      int nr;
-      struct usrPattern *next;
+  color_e color;                  ///< if colorful logging enabled, use specified color
+  int  logLevelCase;              ///< print loglevel in default, lower- or uppercase
 
-      usrPattern(int nr = 0, const char *pattern = NULL) {
-        this->nr = nr;
-        memset(pat, 0, sizeof(pat));
-        if (pattern) {
-          strncpy(pat, pattern, sizeof(pat) - 1);
-        }
+  char logfile[CMaxPathLen];      ///< path to logfile
+  char prefix[CMaxPrefixLen];     ///< set prefix
+  char postfix[CMaxPrefixLen];    ///< postfix, must include newline if needed
+  char separator[CMaxSepLen];     ///< set separator
+  char pattern[CMaxPatternLen];   ///< log msg pattern
 
-        next = NULL;
+  /// Methods
+  CfgLog();
+  ~CfgLog();
+
+  void addUsrPattern(int nr, const char *pat);
+  char *getUsrPattern(int nr);
+
+private:
+
+  typedef struct usrPattern {
+    char pat[CMaxPatternItemLen];
+    int nr;
+    struct usrPattern *next;
+
+    usrPattern(int nr = 0, const char *pattern = NULL) {
+      this->nr = nr;
+      memset(pat, 0, sizeof(pat));
+      if (pattern) {
+        strncpy(pat, pattern, sizeof(pat) - 1);
       }
-    } UsrPattern;
-
-    enum {
-      ELevelCaseDefault = 0,  ///< default level string, e.g. Notice
-      ELevelCaseLower,        ///< lower case level string, e.g. notice
-      ELevelCaseUpper         ///< upper case level string, e.g. NOTICE
-    };
-
-    typedef enum {
-      EColorBlack = 30,
-      EColorRed,
-      EColorGreen,
-      EColorYellow,
-      EColorBlue,
-      EColorMagenta,
-      EColorCyan,
-      EColorWhite
-    } color_e;
-
-    Logger::level_e logLevel;              ///< loglevel
-    Logger::profile_e profile;             ///< logstyle
-    bool logToFile;                        ///< flag for file logging
-    bool useColor;                         ///< enable coloful logging
-    color_e color;
-    int  logLevelCase;                     ///< print level in default, lower- or uppercase
-
-    bool useUsrPattern;                    ///< use user defined patterns
-    UsrPattern *usrPattern;                ///< liked list of user patterns
-
-    char logfile[Logger::CMaxPathLen];     ///< path to logfile
-    char prefix[Logger::CMaxPrefixLen];    ///< set prefix
-    char postfix[Logger::CMaxPrefixLen];   ///< postfix, must include newline if needed
-    char separator[Logger::CMaxSepLen];    ///< set separator
-    char pattern[Logger::CMaxPatternLen];  ///< log msg pattern
-
-    /// Constructor
-    cfgLog() {
-
-      logLevel      = Logger::CLogLevelDefault;
-      profile       = Logger::CLogProfileDefault;
-      logToFile     = false;
-      useColor      = false;
-      color         = EColorWhite;
-      logLevelCase  = ELevelCaseDefault;
-
-      // user defined patterns
-      useUsrPattern = false;
-      usrPattern    = NULL;
-
-      // init strings
-      memset(prefix,      '\0', sizeof(prefix));
-      memset(postfix,     '\0', sizeof(postfix));
-      memset(logfile,     '\0', sizeof(logfile));
-      memset(separator,   '\0', sizeof(separator));
-      memset(pattern,     '\0', sizeof(pattern));
-
-      // set string defaults
-      strcpy(separator, " | ");
-      strcpy(postfix, "\n");
+      next = NULL;
     }
+  } UsrPattern;
 
-    ~cfgLog() {
-      if (usrPattern) {
-        UsrPattern *tmp = usrPattern;
-        UsrPattern *ntmp = tmp;
-        do {
-          ntmp = tmp->next;
-          delete tmp;
-          tmp = ntmp;
-        } while (tmp != NULL);
-      }
-    }
+  UsrPattern *usrPattern;         ///< head of linked list of user patterns
 
-    //TODO: add method to add a user defined pattern item.
-    // pattern items shouldn't be allocated outside of CfgLog!
+};
 
-    void addUsrPattern(int nr, const char *pat) {
-      // find end of pattern list
-      UsrPattern *tmp = NULL;
-      if (!usrPattern) usrPattern = new UsrPattern(nr, pat);
-      else {
-        tmp = usrPattern;
-        while (tmp->next != NULL) {tmp = tmp->next;}
-        tmp->next = new UsrPattern(nr, pat);
-      }
-    }
-  } CfgLog;
+
+class Logger {
+public:
+
+  /// Enums
+  enum { EErr = 0, ENoErr };      ///< return values
 
   /// Default constructor
   Logger();
@@ -173,7 +149,7 @@ public:
   /// @param[in] logfile path to logfile, may be NULL for stdout
   /// @param[in] level desired loglevel [0...4]
   /// @param[in] style desired logstyle [0...2]
-  Logger(const char *logfile, level_e level, profile_e style);
+  Logger(const char *logfile, CfgLog::level_e level, CfgLog::profile_e style);
 
   /// Destructor
   ~Logger();
@@ -191,13 +167,14 @@ public:
   void debug(const char *fmt, ...);
   void always(const char *fmt, ...);
 
-  level_e getLevel(void);
-  profile_e getProfile(void);
-  void setLevel(level_e level);
-  void setProfile(profile_e style);
+  CfgLog::level_e getLevel(void);
+  void setLevel(CfgLog::level_e level);
 
-  int setPattern(const char *pattern);
+  CfgLog::profile_e getProfile(void);
+  void setProfile(CfgLog::profile_e style);
+
   char *getPattern(void);
+  int setPattern(const char *pattern);
 
 private:
 
@@ -220,7 +197,7 @@ private:
   CfgLog  *m_cfg;                         ///< logger config
   FILE    *m_fd;                          ///< file descriptor
   bool     m_removeCfg;                   ///< flag to remove cfgLog in case it was created at ctor
-  int      m_pattern[CMaxPatternItems];   ///< currently set pattern array
+  int      m_pattern[CfgLog::CMaxPatternItems];   ///< currently set pattern array
 
   /// Initialize logger
   void init(void);
@@ -233,7 +210,7 @@ private:
   /// Initialize a default logstyle
   /// sets all style setting to defaults depending on logstyle set
   /// @param [in] profile a default profile
-  void initProfile(profile_e profile);
+  void initProfile(CfgLog::profile_e profile);
 
   /// Add individual parts of the message
   int  addUsr(char *msg, int no);

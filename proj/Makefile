@@ -14,7 +14,7 @@ CFLAGS      = -Wall -std=c++11 -pedantic -D_POSIX_C_SOURCE=200809L -I$(INC_DIR) 
 LIBS        = -lutils
 LIB_FLAGS   = -L$(LIBS_DIR)/bin
 
-SRCS       := $(SRC_DIR)/log.cpp
+SRCS       := $(wildcard $(SRC_DIR)/*.cpp)
 OBJ         = $(patsubst $(SRC_DIR)/%.cpp, $(OBJ_DIR)/%.o, $(SRCS))
 DEPS        = $(patsubst %,$(INC_DIR)/%.h, *)
 
@@ -40,5 +40,5 @@ lib: $(OBJ)
 	ar rcs $(TARGET_DIR)/$(TARGET) $^
 	cp $(INC_DIR)/$(HEADER) $(LIBS_DIR)
 
-test : $(OBJ) $(TEST_OBJ)
+test: $(OBJ) $(TEST_OBJ)
 	$(CC) -o $(TEST_TARGET_DIR)/$(TEST_TARGET) $^ $(CFLAGS) $(LIB_FLAGS) $(LIBS)
