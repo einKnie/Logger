@@ -35,16 +35,9 @@ typedef struct cfgLog {
   static const int   CMaxPatternItemLen = 10;         ///< maximum length of a pattern item
   static const int   CMaxPatternIdLen   = 5;          ///< max length of a pattern identifier
   static const int   CMaxPatternLen     = CMaxPatternItems * CMaxPatternIdLen + 1; ///< 10*4 characters + null termination
+  static const int   CMaxLogLevelStrLen = 10;
 
-  static const char *CLogMsgEmergency;                ///< Emergency string
-  static const char *CLogMsgAlert;                    ///< Alert string
-  static const char *CLogMsgCritical;                 ///< Critical string
-  static const char *CLogMsgError;                    ///< Error string
-  static const char *CLogMsgWarning;                  ///< Warning string
-  static const char *CLogMsgNotice;                   ///< Notice string
-  static const char *CLogMsgInfo;                     ///< Info string
-  static const char *CLogMsgDebug;                    ///< Debug string
-  static const char *CLogMsgAlways;                   ///< Always string
+  static const char CLogMsgLevel[][CMaxLogLevelStrLen]; ///< List of loglevel strings
 
 } cfgLog_t;
 
@@ -61,7 +54,8 @@ public:
     ELogWarn,              ///< always, emerg, alert, crit, errors && warnings
     ELogNotice,            ///< always, emerg, alert, crit, errors, warnings && notices
     ELogInfo,              ///< always, emerg, alert, crit, errors, warnings, notices && infos
-    ELogDebug              ///< always, emerg, alert, crit, errors, warnings, notices, infos && debug msgs
+    ELogDebug,             ///< always, emerg, alert, crit, errors, warnings, notices, infos && debug msgs
+    ELogAlways
   } level_e;               ///< loglevel
 
   typedef enum {
@@ -227,7 +221,7 @@ private:
   void addMsg(char *msg, const char *fmt);
   void addTime(char *msg);
   void addPID(char *msg);
-  void addLevel(char *msg, const char *level);
+  void addLevel(char *msg, CfgLog::level_e lev);
   void addPostfix(char *msg);
   void addPrefix(char *msg);
   void addSeparator(char *msg);
@@ -236,7 +230,7 @@ private:
   /// @param[in,out] msg contains the contructed log msg after call
   /// @param[in] fmt the msg payload
   /// @param[in] level msg level
-  void constructMsg(char *msg, const char *fmt, const char *level);
+  void constructMsg(char *msg, const char *fmt, CfgLog::level_e lev);
 
 };
 

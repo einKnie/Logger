@@ -8,15 +8,17 @@
 
 #include "cpp_log.h"
 
-const char *cfgLog::CLogMsgEmergency = "Emerg";
-const char *cfgLog::CLogMsgAlert     = "Alert";
-const char *cfgLog::CLogMsgCritical  = "Crit";
-const char *cfgLog::CLogMsgError     = "Error";
-const char *cfgLog::CLogMsgWarning   = "Warning";
-const char *cfgLog::CLogMsgNotice    = "Notice";
-const char *cfgLog::CLogMsgInfo      = "Info";
-const char *cfgLog::CLogMsgDebug     = "Debug";
-const char *cfgLog::CLogMsgAlways    = "Always";
+const char cfgLog::CLogMsgLevel[][cfgLog::CMaxLogLevelStrLen] = {
+  "Emerg",
+  "Alert",
+  "Crit",
+  "Error",
+  "Warning",
+  "Notice",
+  "Info",
+  "Debug",
+  "Always"
+};
 
 
 CfgLog::CfgLog() {
