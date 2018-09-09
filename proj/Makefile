@@ -10,7 +10,7 @@ TEST_TARGET = out
 TEST_TARGET_DIR = $(TARGET_DIR)
 
 CC          = g++
-CFLAGS      = -Wall -std=c++11 -pedantic -D_POSIX_C_SOURCE=200809L -I$(INC_DIR) -I$(LIBS_DIR)
+CFLAGS      = -Wall -std=c++11 -pedantic -g -D_POSIX_C_SOURCE=200809L -I$(INC_DIR) -I$(LIBS_DIR)
 LIBS        = -lutils
 LIB_FLAGS   = -L$(LIBS_DIR)/bin
 

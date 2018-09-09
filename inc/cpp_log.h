@@ -177,6 +177,8 @@ public:
   CfgLog::profile_e getProfile(void);
   void setProfile(CfgLog::profile_e style);
 
+
+  ///TODO: since setPattern is API, it shouldnt
   char *getPattern(void);
   int setPattern(const char *pattern);
 
@@ -211,10 +213,14 @@ private:
   /// @return ENoErr on success, EErr on failure
   int initPattern(const char *pattern);
 
-  /// Initialize a default logstyle
-  /// sets all style setting to defaults depending on logstyle set
+  /// Initialize a plogging profile
+  /// sets all style setting to defaults depending on profile set
   /// @param [in] profile a default profile
-  void initProfile(CfgLog::profile_e profile);
+  int initProfile(CfgLog::profile_e profile);
+
+  /// Initialize one of the standard profiles (i.e. not user)
+  /// @param [in] profile a profile
+  int initStandardProfile(CfgLog::profile_e profile);
 
   /// Add individual parts of the message
   int  addUsr(char *msg, int no);

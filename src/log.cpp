@@ -100,10 +100,18 @@ void Logger::init() {
     m_fd = stdout;
   }
 
+  // initialize the profile
+  initProfile(m_cfg->profile);
+}
+
+int Logger::initProfile(CfgLog::profile_e profile) {
+
+  m_cfg->profile = profile;
+
   // set pattern
   if (m_cfg->profile == CfgLog::ELogProfileUser) {
     if (initPattern(m_cfg->pattern) == ENoErr) {
-      return;
+      return ENoErr;
     } else {
       fprintf(stderr, "Failed to apply pattern.\n");
       fprintf(stderr, "Reverting to default....\n");
@@ -112,19 +120,20 @@ void Logger::init() {
     }
   }
 
-  // initialize one of the standard profiles
-  initProfile(m_cfg->profile);
+  return initStandardProfile(m_cfg->profile);
 }
 
-void Logger::initProfile(CfgLog::profile_e profile) {
+int Logger::initStandardProfile(CfgLog::profile_e profile) {
 
   if (!initPattern(default_patterns[(int)m_cfg->profile])) {
     fprintf(stderr, "Failed to initialize standard profile.\n");
+    return EErr;
   } else {
-    PRINT_DEBUG("setting pattern: %s\n", default_patterns[(int)m_cfg->profile]);
+    PRINT_DEBUG("Setting pattern: %s\n", default_patterns[(int)m_cfg->profile]);
     strncpy(m_cfg->pattern, default_patterns[(int)m_cfg->profile], sizeof(m_cfg->pattern));
     m_cfg->logLevelCase = default_level_cases[(int)m_cfg->profile];
   }
+  return ENoErr;
 }
 
 void Logger::emergency(const char *fmt, ...) {
@@ -458,7 +467,7 @@ void Logger::constructMsg(char *msg, const char *fmt, const char *level) {
   for (int i = 0; i < CfgLog::CMaxPatternItems; i++) {
     PRINT_DEBUG("item %d: %d\n", i, m_pattern[i]);
 
-    if (m_pattern[i] > EPatUsr) {
+    if (m_pattern[i] >= EPatUsr) {
       int no = m_pattern[i] - EPatUsr;
       addUsr(buf, no); // user defined pattern
     } else {

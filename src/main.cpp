@@ -3,7 +3,10 @@ extern "C" {
   #include "utils.h"
 }
 
-void test_logger(CfgLog *cfg = NULL);
+int logger_test_profiles(Logger *logger = NULL);
+int logger_test_levels(Logger *logger = NULL);
+int test_standard_logger(void);
+int test_config_logger(CfgLog *cfg);
 
 int main(int argc, const char *argv[]) {
 
@@ -17,7 +20,7 @@ int main(int argc, const char *argv[]) {
   cfg->addUsrPattern(0, "??");
   cfg->addUsrPattern(1, "blülülü");
   cfg->addUsrPattern(2, "§*§");
-  cfg->addUsrPattern(42, "The answer to life, the universe, and everything");
+  cfg->addUsrPattern(3, "The answer to life, the universe, and everything");
 
   strncpy(cfg->pattern, "&pre&lev&sep&us0&tim&us2&sep&msg&end", sizeof(cfg->pattern));
   cfg->profile = CfgLog::ELogProfileUser;
@@ -31,61 +34,66 @@ int main(int argc, const char *argv[]) {
 
   delete logger;
 
-  test_logger(cfg);
+  test_standard_logger();
+  // test_config_logger(cfg);
+  // logger_test_profiles();
+  // logger_test_levels();
 
   delete cfg;
-
-  // char tmp[] = "1cjfh2bh3nm4u5n6n7o8hh9do0zu";
-  // char *buf, *buf2;
-  // buf = &tmp[0];
-  // buf2 = buf;
-  // for (int i = 0; i < strlen(tmp); i++) {
-  //   int j = findNextNumeric(buf, &buf2);
-  //   if (j == -1) {
-  //     printf("done!\n"); break;
-  //   }
-  //   printf("found %d - remaining string: %s\n", j, buf2);
-  //   buf = buf2;
-  // }
-
 
   return 0;
 }
 
-void test_logger(CfgLog *cfg) {
+/// Output all default profiles
+int logger_test_profiles(Logger *logger) {
   Logger *log = NULL;
-  // char pattern[80] = {0};
 
-  if (cfg != NULL) {
-    log = new Logger(cfg);
-  } else {
+  if (logger == NULL) {
     log = new Logger();
+  } else {
+    log = logger;
   }
 
-  log->setLevel(CfgLog::ELogDebug);
+  // log->setLevel(CfgLog::ELogDebug);
+  log->always("Testing profiles");
 
-  log->always("Testing styles");
-  for (int i = 0; i <= CfgLog::ELogProfileVerbose;) {
+  for (int i = 0; i <=  CfgLog::ELogProfileUser; ) {
+    log->always("--- Test %d start ---", i+1);
 
+    // inc i here instead of at loop to start with test 1 instead of 0
     log->setProfile((CfgLog::profile_e)i++);
 
-    log->always("test %d start...", i);
     log->always("an always msg");
     log->error("an error");
     log->warning("a warning");
     log->notice("a notice");
     log->debug("a debug msg");
-    log->always("test %d end....", i);
 
+    log->setProfile(CfgLog::ELogProfileNone);
+    log->always("---  Test %d end  ---", i);
+  }
+
+  return 0;
+}
+
+int logger_test_levels(Logger *logger) {
+
+  Logger *log = NULL;
+
+  if (logger == NULL) {
+    log = new Logger();
+  } else {
+    log = logger;
   }
 
   log->setProfile(CfgLog::ELogProfileDefault);
   log->always("Testing levels");
+
   for (int i = 0; i <= CfgLog::ELogDebug;) {
 
     log->setLevel((CfgLog::level_e)i++);
 
-    log->always("test %d start...", i);
+    log->always("--- Test %d start ---", i);
     log->always("an always msg");
     log->emergency("an emergency");
     log->alert("an alert");
@@ -95,10 +103,33 @@ void test_logger(CfgLog *cfg) {
     log->notice("a notice");
     log->info("an info");
     log->debug("a debug msg");
-    log->always("test %d end....", i);
-
+    log->always("---  Test %d end  ---", i);
   }
 
-  log->always("Finished logger testing");
-  delete log;
+  return 0;
+}
+
+int test_standard_logger() {
+
+  logger_test_profiles();
+  logger_test_levels();
+
+  return 0;
+}
+
+int test_config_logger(CfgLog *cfg) {
+
+  if (cfg == NULL) {
+    return 1;
+  }
+
+  Logger *log = NULL;
+  log = new Logger(cfg);
+  if (log == NULL) {
+    return 1;
+  }
+
+  logger_test_levels(log);
+  logger_test_profiles(log);
+  return 0;
 }
