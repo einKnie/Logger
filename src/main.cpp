@@ -34,7 +34,11 @@ int main(int argc, const char *argv[]) {
 
   delete logger;
 
-  test_standard_logger();
+  Logger *newLog = new Logger("test.log", CfgLog::ELogDebug, CfgLog::ELogProfileDefault);
+  newLog->debug("blub");
+  delete newLog;
+
+  // test_standard_logger();
   // test_config_logger(cfg);
   // logger_test_profiles();
   // logger_test_levels();
@@ -93,7 +97,7 @@ int logger_test_levels(Logger *logger) {
 
     log->setLevel((CfgLog::level_e)i++);
 
-    log->always("--- Test %d start ---", i);
+    log->always("\n--- Test log level %s start ---", CfgLog::CLogMsgLevel[i]);
     log->always("an always msg");
     log->emergency("an emergency");
     log->alert("an alert");
@@ -103,7 +107,7 @@ int logger_test_levels(Logger *logger) {
     log->notice("a notice");
     log->info("an info");
     log->debug("a debug msg");
-    log->always("---  Test %d end  ---", i);
+    log->always("--- Test log level %s end ---\n", CfgLog::CLogMsgLevel[i]);
   }
 
   return 0;

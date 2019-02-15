@@ -1,10 +1,13 @@
-///        __
-///       / /   ___   __ _  __ _  ___ _ __
-///      / /   / _ \ / _` |/ _` |/ _ \ '__|
-///     / /___| (_) | (_| | (_| |  __/ |
-///     \____/ \___/ \__, |\__, |\___|_|
-///                  |___/ |___/        v0.1
-///      <einKnie@gmx.at>
+//        __
+//       / /   ___   __ _  __ _  ___ _ __
+//      / /   / _ \ / _` |/ _` |/ _ \ '__|
+//     / /___| (_) | (_| | (_| |  __/ |
+//     \____/ \___/ \__, |\__, |\___|_|
+//                  |___/ |___/        v0.1
+//      <einKnie@gmx.at>
+
+/// @file cpp_log.h
+/// @brief Header file of the Cpp Logger and CfgLog
 
 #ifndef _CPP_LOGGER_H_
 #define _CPP_LOGGER_H_
@@ -24,13 +27,14 @@
   #define PRINT_DEBUG(...)
 #endif
 
+/// Basic struct containing constants
 typedef struct cfgLog {
 
-  /// Constants
+  // Constants
   static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
   static const int   CMaxMsgLen         = 500;        ///< max logger line length
   static const int   CMaxPrefixLen      = 10;         ///< maximum length of the msg prefix
-  static const int   CMaxSepLen         = 10;         ///< maximum length of the separator
+  static const int   CMaxSepLen         = 5;          ///< maximum length of the separator
   static const int   CMaxPatternItems   = 10;         ///< maximum number of pattern items which may be set
   static const int   CMaxPatternItemLen = 10;         ///< maximum length of a pattern item
   static const int   CMaxPatternIdLen   = 5;          ///< max length of a pattern identifier
@@ -41,37 +45,44 @@ typedef struct cfgLog {
 
 } cfgLog_t;
 
-
+/// @brief CfgLog class
+///
+/// A configuration class for the CPP Logger
 class CfgLog : public cfgLog_t {
 public:
 
-  /// Enums
+  // Enums
+  /// @brief Enumeration of available log levels
   typedef enum {
-    ELogEmergency = 0,     ///< always && emergency msgs
-    ELogAlert,             ///< always, emergency && alert msgs
-    ELogCritical,          ///< always, emerg, alert && critical msgs
-    ELogError,             ///< always, emerg, alert, crit && errors
-    ELogWarn,              ///< always, emerg, alert, crit, errors && warnings
-    ELogNotice,            ///< always, emerg, alert, crit, errors, warnings && notices
-    ELogInfo,              ///< always, emerg, alert, crit, errors, warnings, notices && infos
-    ELogDebug,             ///< always, emerg, alert, crit, errors, warnings, notices, infos && debug msgs
+    ELogEmergency = 0,     ///< print always && emergency msgs
+    ELogAlert,             ///< print always &&emergency && alert msgs
+    ELogCritical,          ///< print always &&emerg, alert && critical msgs
+    ELogError,             ///< print always &&emerg, alert, crit && errors
+    ELogWarn,              ///< print always &&emerg, alert, crit, errors && warnings
+    ELogNotice,            ///< print always &&emerg, alert, crit, errors, warnings && notices
+    ELogInfo,              ///< print always &&emerg, alert, crit, errors, warnings, notices && infos
+    ELogDebug,             ///< print always &&emerg, alert, crit, errors, warnings, notices, infos && debug msgs
     ELogAlways
   } level_e;               ///< loglevel
 
+  /// @brief Enumeration of available profiles.<br>
+  /// See @ref PatternExample on how to create and use a user-defined style.
   typedef enum {
     ELogProfileNone  = 0,  ///< print just the plain message
-    ELogProfileMinimal,    ///< output minimalistic logging
-    ELogProfileDefault,    ///< time && level
-    ELogProfileVerbose,    ///< output verbose logging
+    ELogProfileMinimal,    ///< print level and message
+    ELogProfileDefault,    ///< print time, level, and message
+    ELogProfileVerbose,    ///< print pid, time, level, and message
     ELogProfileUser        ///< user-defined style
   } profile_e;             ///< logstyle
 
+  /// @brief Enumeration of level string casing
   enum {
     ELevelCaseDefault = 0,  ///< default level string, e.g. Notice
     ELevelCaseLower,        ///< lower case level string, e.g. notice
     ELevelCaseUpper         ///< upper case level string, e.g. NOTICE
   };
 
+  /// @brief Enumeration of available colors
   typedef enum {
     EColorBlack = 30,
     EColorRed,
@@ -83,30 +94,40 @@ public:
     EColorWhite
   } color_e;                ///< terminal color values
 
-  static const level_e CLogLevelDefault     = ELogDebug;        ///< default loglevel value
+  static const level_e CLogLevelDefault     = ELogDebug;        ///< default loglevel
   static const profile_e CLogProfileDefault = ELogProfileNone;  ///< default profile
 
-  /// Members
+  // Members
   level_e logLevel;               ///< loglevel
   profile_e profile;              ///< logstyle
-  bool logToFile;                 ///< flag for file logging
+  bool logToFile;                 ///< enable file logging
   bool useColor;                  ///< enable colorful logging
-  bool useUsrPattern;             ///< use user defined patterns
+  bool useUsrPattern;             ///< ebable user defined patterns
 
-  color_e color;                  ///< if colorful logging enabled, use specified color
+  color_e color;                  ///< if colorful logging is enabled, use specified color
   int  logLevelCase;              ///< print loglevel in default, lower- or uppercase
 
   char logfile[CMaxPathLen];      ///< path to logfile
-  char prefix[CMaxPrefixLen];     ///< set prefix
-  char postfix[CMaxPrefixLen];    ///< postfix, must include newline if needed
-  char separator[CMaxSepLen];     ///< set separator
-  char pattern[CMaxPatternLen];   ///< log msg pattern
+  char prefix[CMaxPrefixLen];     ///< prefix
+  char postfix[CMaxPrefixLen];    ///< postfix
+  char separator[CMaxSepLen];     ///< separator
+  char pattern[CMaxPatternLen];   ///< logging pattern
 
-  /// Methods
+  // Methods
+  /// @brief Constructor
   CfgLog();
+
+  /// @brief Destructor
   ~CfgLog();
 
+  /// @brief Add a user defined pattern
+  /// @param [in] nr the position
+  /// @param [in] pat a char array containing the pattern
   void addUsrPattern(int nr, const char *pat);
+
+  /// @brief Retrieve a user defined pattern
+  /// @param [in] nr the position
+  /// @return a pointer to the user pattern at position nr
   char *getUsrPattern(int nr);
 
 private:
@@ -130,50 +151,80 @@ private:
 
 };
 
-
+/// @brief Logger class
+///
+/// The Logger provides simple API calls for configuration and logging
 class Logger {
 public:
 
-  /// Enums
-  enum { EErr = 0, ENoErr };      ///< return values
+  /// Return values used by Logger
+  enum { EErr = 0, ENoErr };
 
   /// Default constructor
   Logger();
 
-  /// Constructor with CfgLog
+  /// @brief Constructor with CfgLog
+  /// @param [in] cfg pointer to a CfgLog object
   Logger(CfgLog *cfg);
 
-  /// Constructor
+  /// @brief Extended Constructor
   /// @param[in] logfile path to logfile, may be NULL for stdout
-  /// @param[in] level desired loglevel [0...4]
-  /// @param[in] style desired logstyle [0...2]
+  /// @param[in] level desired loglevel @ref CfgLog::level_e
+  /// @param[in] style desired logstyle @ref CfgLog::profile_e
   Logger(const char *logfile, CfgLog::level_e level, CfgLog::profile_e style);
 
   /// Destructor
   ~Logger();
 
-  /// Initialize logger with CfgLog struct
+  /// @brief Initialize logger with CfgLog struct
+  /// @param [in] cfg pointer to a CfgLog object
+  /// @return EErr on failure, ENoErr on success
+  /// @note In case initialization has failed, the logger is still usable and returns to the default state.
   int init(CfgLog *cfg);
 
+  /// @brief Print an emergency message
   void emergency(const char *fmt, ...);
+  /// @brief Print an alert message
   void alert(const char *fmt, ...);
+  /// @brief Print a critical message
   void critical(const char *fmt, ...);
+  /// @brief Print an error message
   void error(const char *fmt, ...);
+  /// @brief Print a warning message
   void warning(const char *fmt, ...);
+  /// @brief Print a notice
   void notice(const char *fmt, ...);
+  /// @brief Print an info
   void info(const char *fmt, ...);
+  /// @brief Print a debug message
   void debug(const char *fmt, ...);
+  /// @brief Print an always message
   void always(const char *fmt, ...);
 
+  /// @brief Return the currently set log level
+  /// @return the loglevel
   CfgLog::level_e getLevel(void);
+
+  /// @brief Set the log level
+  /// @param [in] level a loglevel
   void setLevel(CfgLog::level_e level);
 
+  /// @brief Return the currently used profile
+  /// @return the logging profile
   CfgLog::profile_e getProfile(void);
+
+  /// @brief Set the logging profile
+  /// @param [in] style a logging profile
   void setProfile(CfgLog::profile_e style);
 
-
-  ///TODO: since setPattern is API, it shouldnt
+  /// @brief Return a pointer to the currently set pattern
+  /// @return pointer to logging pattern
   char *getPattern(void);
+
+  /// @brief Set a custom message pattern
+  /// @param [in] pattern a string containing a valid pattern
+  /// @return EErr on failure, ENoErr on success
+  /// @note In case initialization has failed, the logger is still usable and returns to the default state.
   int setPattern(const char *pattern);
 
 private:
@@ -226,7 +277,7 @@ private:
   void addPrefix(char *msg);
   void addSeparator(char *msg);
 
-  /// Construct a log message
+  /// @brief Construct a log message
   /// @param[in,out] msg contains the contructed log msg after call
   /// @param[in] fmt the msg payload
   /// @param[in] level msg level

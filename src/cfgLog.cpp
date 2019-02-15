@@ -1,10 +1,13 @@
-///        __
-///       / /   ___   __ _  __ _  ___ _ __
-///      / /   / _ \ / _` |/ _` |/ _ \ '__|
-///     / /___| (_) | (_| | (_| |  __/ |
-///     \____/ \___/ \__, |\__, |\___|_|
-///                  |___/ |___/        v0.1
-///      <einKnie@gmx.at>
+//        __
+//       / /   ___   __ _  __ _  ___ _ __
+//      / /   / _ \ / _` |/ _` |/ _ \ '__|
+//     / /___| (_) | (_| | (_| |  __/ |
+//     \____/ \___/ \__, |\__, |\___|_|
+//                  |___/ |___/        v0.1
+//      <einKnie@gmx.at>
+
+/// @file cfgLog.cpp
+/// @brief Implementation of the CfgLog class
 
 #include "cpp_log.h"
 
@@ -19,7 +22,6 @@ const char cfgLog::CLogMsgLevel[][cfgLog::CMaxLogLevelStrLen] = {
   "Debug",
   "Always"
 };
-
 
 CfgLog::CfgLog() {
 

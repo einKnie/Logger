@@ -1,10 +1,13 @@
-///        __
-///       / /   ___   __ _  __ _  ___ _ __
-///      / /   / _ \ / _` |/ _` |/ _ \ '__|
-///     / /___| (_) | (_| | (_| |  __/ |
-///     \____/ \___/ \__, |\__, |\___|_|
-///                  |___/ |___/        v0.1
-///      <einKnie@gmx.at>
+//        __
+//       / /   ___   __ _  __ _  ___ _ __
+//      / /   / _ \ / _` |/ _` |/ _ \ '__|
+//     / /___| (_) | (_| | (_| |  __/ |
+//     \____/ \___/ \__, |\__, |\___|_|
+//                  |___/ |___/        v0.1
+//      <einKnie@gmx.at>
+
+/// @file log.cpp
+/// @brief Implementation of the Logger class
 
 #include "cpp_log.h"
 #include <errno.h>
@@ -18,17 +21,17 @@ extern "C" {
 
 /// default logprofile patterns
 char default_patterns[][CfgLog::CMaxPatternLen] = {
-                     "&msg&end",                              // CfgLog::ELogProfileNone
-                     "&pre&lev&sep&msg&end",                  // CfgLog::ELogProfileMinimal
-                     "&pre&tim&sep&lev&sep&msg&end",          // CfgLog::ELogProfileDefault
-                     "&pre&pid&sep&tim&sep&lev&sep&msg&end",  // CfgLog::ELogProfileVerbose
+                     "&msg&end",                              ///< corresponds to CfgLog::ELogProfileNone
+                     "&pre&lev&sep&msg&end",                  ///< corresponds to CfgLog::ELogProfileMinimal
+                     "&pre&tim&sep&lev&sep&msg&end",          ///< corresponds to CfgLog::ELogProfileDefault
+                     "&pre&pid&sep&tim&sep&lev&sep&msg&end",  ///< corresponds to CfgLog::ELogProfileVerbose
                     };
 /// default level caase config for default profiles
 int default_level_cases[] = {
-                              CfgLog::ELevelCaseLower,    // CfgLog::ELogProfileNone
-                              CfgLog::ELevelCaseLower,    // CfgLog::ELogProfileMinimal
-                              CfgLog::ELevelCaseDefault,  // CfgLog::ELogProfileDefault
-                              CfgLog::ELevelCaseUpper     // CfgLog::ELogProfileVerbose
+                              CfgLog::ELevelCaseLower,    ///< corresponds to CfgLog::ELogProfileNone
+                              CfgLog::ELevelCaseLower,    ///< corresponds to CfgLog::ELogProfileMinimal
+                              CfgLog::ELevelCaseDefault,  ///< corresponds to CfgLog::ELogProfileDefault
+                              CfgLog::ELevelCaseUpper     ///< corresponds to CfgLog::ELogProfileVerbose
                             };
 
 Logger::Logger() : Logger(NULL, CfgLog::CLogLevelDefault, CfgLog::CLogProfileDefault) {}
@@ -208,6 +211,13 @@ void Logger::error(const char *fmt, ...) {
   if (m_cfg->logLevel < CfgLog::ELogError) return;
 
   constructMsg(msg, fmt, CfgLog::ELogError);
+  
+  if (m_cfg->useColor) {
+    char buf[CfgLog::CMaxMsgLen];
+    strcpy(buf, msg);
+    sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
+  }
+
   va_start(args, fmt);
   LOG(msg, args);
   va_end(args);
@@ -262,7 +272,7 @@ void Logger::debug(const char *fmt, ...) {
 
   if (m_fd == NULL) return;
   if (m_cfg->logLevel < CfgLog::ELogDebug) return;
-  
+
   constructMsg(msg, fmt, CfgLog::ELogDebug);
   va_start(args, fmt);
   LOG(msg, args);

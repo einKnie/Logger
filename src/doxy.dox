@@ -1,0 +1,247 @@
+
+/// @mainpage CPPLogger
+/// Documentation for a versatile and fully customizable logger for c++ applications.
+/// ## Compilation and Usage
+/// The CPPLogger comes as a library to be linked with your application.
+/// Just include the @ref cpp_log.h headerfile in your application and link to the library <i>libcpplogging.a</i> during compilation
+/// @code
+/// g++ <your/main.cpp> -I path/to/lib -L path/to/lib -lcpplogging
+/// @endcode
+/// For examples and usage, see the @ref examples page.
+/// - - - - - - - - - -
+/// @author einKnie@gmx.at
+
+/// @page examples
+
+/// @example PatternExample
+/// This example shows how to configure a pattern for the generated Logger output.
+/// ## Code
+/// The following snippet shows how to set a custom message pattern.
+/// @snippet examples.cpp pattern example
+/// <b>Terminal output</b>
+/// @code{.unparsed}
+/// > This is the default logger configuration
+/// > 15:52:55 | always  | This is our new pattern
+/// > 15:52:55 | always  | Current pattern set: &tim&sep&lev&sep&msg
+/// @endcode
+/// ## Log Patterns
+/// Patterns define how the logger is outputting a given log message. We can enable
+/// timestamps, process id, display the log level and much more.<br>
+/// With the &us<nr> shorthand, you can also add up to 10 user defined strings to be
+/// inserted anywhere in the log message.
+/// <br> The following table shows all available pattern shorthands:
+/// Description | shorthand | default value
+/// ----------- | ---------- | ------------
+/// display the time | &tim | -
+/// display loglevel | &lev | -
+/// display process id | &pid | -
+/// display message | &msg | -
+/// add a prefix | &pre | '\0'
+/// add a vertical separator | &sep | '\|'
+/// add a postfix | &end | '\\n'
+/// add a user defined string | &us<nr> | '\0'
+/// Prefix, postfix, separator and all the user defined strings can be set to any desired symbol or string.<br>
+/// See the CfgLog class on how to set the above shorthands.
+/// ### The User pattern
+/// The <i>&us<nr></i> pattern shorthand is special, as you can define up to 10
+/// different strings and address them as <i>&us0</i> up to <i>&us9</i> in your pattern string.<br>
+///
+/// @note
+/// User defined pattern shorthands can only be added through a CfgLog object.<br>
+/// See @ref UserPatternShorthands for more information on user defined pattern shorthands.
+///
+/// ## Patterns for predefined profiles
+/// The predefined logging profiles available (CfgLog::profile_e) also operate
+/// based on a pattern. In the following, the patterns are shown for reference:
+/// Profile | Pattern
+/// ------- | --------
+/// ELogProfileNone | "&msg&end"
+/// ELogProfileMinimal | "&pre&lev&sep&msg&end"
+/// ELogProfileDefault | "&pre&tim&sep&lev&sep&msg&end" <b>*</b>
+/// ELogProfileVerbose | "&pre&pid&sep&tim&sep&lev&sep&msg&end"
+/// <i><b>*</b> Note that ELogProfileNone is actually the default setting of a newly created Logger</i><br>
+
+/// @example InitExample
+/// There are three different ways to create a Logger object.<br>
+/// A standard Logger created without additional arguments will behave just like standard console output á la printf.<br>
+/// Alternatively, the Logger may be created with file logging enabled, in which case log level and a profile must also be given.<br>
+/// For advanced configuration options, the Logger can also be created from a CfgLog object with the desired configuration set.
+/// ### Default Logger ###
+/// Create a default Logger, without any arguments. This
+/// default configuration prints to stdout and displays only the plain text.
+/// @snippet examples.cpp init default
+/// <b>Terminal output</b>
+/// @code{.unparsed}
+/// > This is a default logger configuration
+/// @endcode
+/// ### File Logger ###
+/// Create a file Logger, by specifying the path to the desired logfile.
+/// The file does not need to exist prior to Logger creation.
+/// @snippet examples.cpp init file
+/// <b>File output</b>
+/// @code{.unparsed}
+/// This logger writes to a file
+/// @endcode
+/// ### Logger from CfgLog ###
+/// Configure a Logger from a CfgLog structure. This offers many
+/// possibilities in customizing the output, a few of which are shown here.
+/// @snippet examples.cpp init cfglog
+/// <b>File Output</b>
+/// @code{.unparsed}
+/// 15:52:55 | This is a cfgLog-configured logger
+/// @endcode
+/// ### Reconfigure existing Logger from CfgLog ###
+/// You may also change the Logger's configuration during runtime by calling the
+/// public init() method with a CfgLog object.<br>
+/// The following code snippet shows the reinitialisation of a logger using a CfgLog:
+/// @snippet examples.cpp init reinit
+/// <b>Terminal output</b>
+/// @code{.unparsed}
+/// > This is a default logger
+/// > 2902 | 15:52:55 | ALWAYS  | This is the new configuration
+/// @endcode
+
+/// @example UserPatternShorthands
+/// This example shows how to set a user defined pattern shorthand and use it in a Logger pattern
+/// ## User Defined Shorthands
+/// Up to nine user defined shorthands may be created.<br>Each shorthand may consist
+/// of up to CfgLog::CMaxPatternItemLen characters.<br>
+/// By using the shorthand codes <i>&us0</i> up to <i>&us9</i> in a pattern string,
+/// the user defined pattern shorthands can be added to all generated Logger output.<br>
+/// See @ref PatternExample for more info on pattern strings.
+/// ## Code
+/// The following code snippet sets two user defined pattern shorthands and uses them in a pattern
+/// @snippet examples.cpp shorthand example
+/// <b>Terminal output</b>
+/// @code{.unparsed}
+/// > ~!~ Always  --- This is a message using user defined pattern shorthands
+/// > ~!~ Always  --- Current pattern set: &us0&lev&us1&msg
+/// > ~!~ Always  --- The user patterns are " ~!~ " and " --- "
+/// @endcode
+
+/// @example Colors
+/// This example shows the use of colored output.
+/// ## Available Colors and Behaviour
+/// The standard list of terminal-supported colors is available. See CfgLog::color_e for the full list.<br>
+/// @note Colored output is currently only supported for messages of level error and above.
+///
+/// ## Code
+/// The following code snippet will demonstrate the use of colored output.
+/// @snippet examples.cpp color example
+/// #### Output
+/// The above code will produce the follwing output on a non color-enabled terminal
+/// @code{.unparsed}
+/// > 15:52:55 | Always  | This is a colorful logger
+/// > 15:52:55 | Warning | This is a warning
+/// > 15:52:55 | Error   | This is an error
+/// > 15:52:55 | Crit    | This is critical
+/// @endcode
+
+/// @example BasicUsage
+/// This example shows the basic usage of the CPP Logger.
+/// ## Logging profiles
+/// The predefined logging profiles (see CfgLog::profile_e) provide a few default logger configurations.<br>
+/// In the following snippet, a Logger is created and a few log messages are printed using different logging profiles:<br>
+/// @note To learn more about <i>patterns</i>, see the @ref PatternExample.
+///
+/// <b>Code</b>
+/// @snippet examples.cpp profile example
+/// <b>Terminal output</b>
+/// @code{.unparsed}
+/// > This is an error
+/// > This is an information
+/// > Current pattern set: &msg&end
+/// >
+/// > error   | This is an error in minimal profile
+/// > info    | This is an information in minimal profile
+/// > always  | Current pattern set: &pre&lev&sep&msg&end
+/// >
+/// > 20:28:46 | Error   | This is an error in default profile
+/// > 20:28:46 | Info    | This is an information in default profile
+/// > 20:28:46 | Always  | Current pattern set: &pre&tim&sep&lev&sep&msg&end
+/// >
+/// > 3794 | 20:28:46 | ERROR   | This is an error in verbose profile
+/// > 3794 | 20:28:46 | INFO    | This is an information in verbose profile
+/// > 3794 | 20:28:46 | ALWAYS  | Current pattern set: &pre&pid&sep&tim&sep&lev&sep&msg&end
+/// @endcode
+/// ## Log Levels
+/// The configured log level determines which messages are actually printed.<br>
+/// <i>Always</i> messages cannot be suppressed and are always printed.
+/// Log levels span from @ref CfgLog::ELogEmergency (only <i>emergency</i> and <i>always</i> messages)
+/// up to @ref CfgLog::ELogDebug (all message types, including debug messages).
+///
+/// In the following code snippet, a logger is created and a range of log messages is printed using different log levels:
+/// <br><b>Code</b>
+/// @snippet examples.cpp level example
+/// <b>Terminal output</b>
+/// @code{.unparsed}
+/// > 22:35:08 | Always  | --- Test log level Emerg start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Always  | --- Test log level Emerg end ---
+/// >
+/// > 22:35:08 | Always  | --- Test log level Alert start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Alert   | an alert
+/// > 22:35:08 | Always  | --- Test log level Alert end ---
+/// >
+/// > 22:35:08 | Always  | --- Test log level Crit start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Alert   | an alert
+/// > 22:35:08 | Crit    | a critical msg
+/// > 22:35:08 | Always  | --- Test log level Crit end ---
+/// >
+/// > 22:35:08 | Always  | --- Test log level Error start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Alert   | an alert
+/// > 22:35:08 | Crit    | a critical msg
+/// > 22:35:08 | Error   | an error
+/// > 22:35:08 | Always  | --- Test log level Error end ---
+/// >
+/// > 22:35:08 | Always  | --- Test log level Warning start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Alert   | an alert
+/// > 22:35:08 | Crit    | a critical msg
+/// > 22:35:08 | Error   | an error
+/// > 22:35:08 | Warning | a warning
+/// > 22:35:08 | Always  | --- Test log level Warning end ---
+/// >
+/// > 22:35:08 | Always  | --- Test log level Notice start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Alert   | an alert
+/// > 22:35:08 | Crit    | a critical msg
+/// > 22:35:08 | Error   | an error
+/// > 22:35:08 | Warning | a warning
+/// > 22:35:08 | Notice  | a notice
+/// > 22:35:08 | Always  | --- Test log level Notice end ---
+/// >
+/// > 22:35:08 | Always  | --- Test log level Info start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Alert   | an alert
+/// > 22:35:08 | Crit    | a critical msg
+/// > 22:35:08 | Error   | an error
+/// > 22:35:08 | Warning | a warning
+/// > 22:35:08 | Notice  | a notice
+/// > 22:35:08 | Info    | an info
+/// > 22:35:08 | Always  | --- Test log level Info end ---
+/// >
+/// > 22:35:08 | Always  | --- Test log level Debug start ---
+/// > 22:35:08 | Always  | an always msg
+/// > 22:35:08 | Emerg   | an emergency
+/// > 22:35:08 | Alert   | an alert
+/// > 22:35:08 | Crit    | a critical msg
+/// > 22:35:08 | Error   | an error
+/// > 22:35:08 | Warning | a warning
+/// > 22:35:08 | Notice  | a notice
+/// > 22:35:08 | Info    | an info
+/// > 22:35:08 | Debug   | a debug msg
+/// > 22:35:08 | Always  | --- Test log level Debug end ---
+/// @endcode
+
+/// @endpage
