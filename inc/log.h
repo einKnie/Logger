@@ -4,7 +4,7 @@
 //     / /___| (_) | (_| | (_| |  __/ |
 //     \____/ \___/ \__, |\__, |\___|_|
 //                  |___/ |___/        v0.1
-//      <einKnie@gmx.at>
+//      <ramharter>
 
 /// @file cpp_log.h
 /// @brief Header file of the Cpp Logger and CfgLog
@@ -15,10 +15,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <linux/limits.h>
+#include <stdint.h>
 
-// TODO:
-// think of everything a user might want to configure
-// and define ONE way to do so.
+#define ASCII_LOWER_START 97
+#define ASCII_LOWER_END   122
+#define ASCII_UPPER_START 65
+#define ASCII_UPPER_END   90
 
 // #define DEBUG
 #if defined DEBUG
@@ -32,7 +34,7 @@ typedef struct cfgLog {
 
   // Constants
   static const int   CMaxPathLen        = PATH_MAX;   ///< max path length
-  static const int   CMaxMsgLen         = 500;        ///< max logger line length
+  static const int   CMaxLogMsgLen      = 200;        ///< max logger line length
   static const int   CMaxPrefixLen      = 10;         ///< maximum length of the msg prefix
   static const int   CMaxSepLen         = 5;          ///< maximum length of the separator
   static const int   CMaxPatternItems   = 10;         ///< maximum number of pattern items which may be set
@@ -41,7 +43,7 @@ typedef struct cfgLog {
   static const int   CMaxPatternLen     = CMaxPatternItems * CMaxPatternIdLen + 1; ///< 10*4 characters + null termination
   static const int   CMaxLogLevelStrLen = 10;
 
-  static const char CLogMsgLevel[][CMaxLogLevelStrLen]; ///< List of loglevel strings
+  static const char  CLogMsgLevel[][CMaxLogLevelStrLen]; ///< List of loglevel strings
 
 } cfgLog_t;
 
@@ -94,7 +96,7 @@ public:
     EColorWhite
   } color_e;                ///< terminal color values
 
-  static const level_e CLogLevelDefault     = ELogDebug;        ///< default loglevel
+  static const level_e   CLogLevelDefault   = ELogDebug;        ///< default loglevel
   static const profile_e CLogProfileDefault = ELogProfileNone;  ///< default profile
 
   // Members
@@ -154,6 +156,8 @@ private:
 /// @brief Logger class
 ///
 /// The Logger provides simple API calls for configuration and logging
+/// @todo Implement log rotation (file size based or time based)
+/// @todo Implement choice between new file or append to file
 class Logger {
 public:
 
@@ -282,6 +286,24 @@ private:
   /// @param[in] fmt the msg payload
   /// @param[in] level msg level
   void constructMsg(char *msg, const char *fmt, CfgLog::level_e lev);
+
+  /// @brief Convert a string \a buf to uppercase letters
+  /// @param[in,out] buf the character array to be converted
+  /// @param [in] len length of \a buf
+  /// @return a pointer to the converted char array \a buf
+  char *to_upper(char* bug, uint8_t len);
+
+  /// @brief Convert a string \a buf to lowercase letters
+  /// @param[in,out] buf the character array to be converted
+  /// @param [in] len length of \a buf
+  /// @return a pointer to the converted char array \a buf
+  char *to_lower(char* buf, uint8_t len);
+
+  /// @brief Find and return the next numeric value found in \a buf
+  /// @param [in] buf buffer to find numerica value in
+  /// @param [in,out] rembuf pointer to next character in \a buf after found numeric
+  /// @return numeric value on success, -1 on failure
+  int findNextNumeric(const char *buf, char **rembuf);
 
 };
 

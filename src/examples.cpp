@@ -4,12 +4,12 @@
 //     / /___| (_) | (_| | (_| |  __/ |
 //     \____/ \___/ \__, |\__, |\___|_|
 //                  |___/ |___/        v0.1
-//      <einKnie@gmx.at>
+//      <ramharter>
 
 /// @file examples.cpp
 /// @brief All example code used in the doxygen examples
 
-#include "cpp_log.h"
+#include "log.h"
 
 void init_example() {
   //! [init default]
@@ -38,7 +38,9 @@ void init_example() {
   // Create a Logger object from the config
   log = new Logger(cfg);
   log->always("This is a cfgLog-configured logger\n");
+
   delete log;
+  delete cfg;
   //! [init cfglog]
 
   //! [init reinit]
@@ -55,6 +57,7 @@ void init_example() {
   log->always("This is the new configuration");
 
   delete log;
+  delete cfg;
   //! [init reinit]
 }
 
@@ -93,6 +96,7 @@ void userPatternShorthand_example() {
   log->always("The user patterns are \"%s\" and \"%s\"\n", cfg->getUsrPattern(0), cfg->getUsrPattern(1));
 
   delete log;
+  delete cfg;
   //! [shorthand example]
 }
 
@@ -113,6 +117,7 @@ void color_example() {
   log->critical("This is critical");
 
   delete log;
+  delete cfg;
   //! [color example]
 }
 

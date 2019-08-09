@@ -4,12 +4,12 @@
 //     / /___| (_) | (_| | (_| |  __/ |
 //     \____/ \___/ \__, |\__, |\___|_|
 //                  |___/ |___/        v0.1
-//      <einKnie@gmx.at>
+//      <ramharter>
 
 /// @file cfgLog.cpp
 /// @brief Implementation of the CfgLog class
 
-#include "cpp_log.h"
+#include "log.h"
 
 const char cfgLog::CLogMsgLevel[][cfgLog::CMaxLogLevelStrLen] = {
   "Emerg",

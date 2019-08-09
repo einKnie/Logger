@@ -4,20 +4,18 @@
 //     / /___| (_) | (_| | (_| |  __/ |
 //     \____/ \___/ \__, |\__, |\___|_|
 //                  |___/ |___/        v0.1
-//      <einKnie@gmx.at>
+//      <ramharter>
 
 /// @file log.cpp
 /// @brief Implementation of the Logger class
 
-#include "cpp_log.h"
+#include "log.h"
 #include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <stdarg.h>
-
-extern "C" {
-  #include "utils.h"
-}
+#include <stdlib.h>
+#include <ctype.h>
 
 /// default logprofile patterns
 char default_patterns[][CfgLog::CMaxPatternLen] = {
@@ -26,12 +24,12 @@ char default_patterns[][CfgLog::CMaxPatternLen] = {
                      "&pre&tim&sep&lev&sep&msg&end",          ///< corresponds to CfgLog::ELogProfileDefault
                      "&pre&pid&sep&tim&sep&lev&sep&msg&end",  ///< corresponds to CfgLog::ELogProfileVerbose
                     };
-/// default level caase config for default profiles
+/// default level case config for default profiles
 int default_level_cases[] = {
-                              CfgLog::ELevelCaseLower,    ///< corresponds to CfgLog::ELogProfileNone
-                              CfgLog::ELevelCaseLower,    ///< corresponds to CfgLog::ELogProfileMinimal
-                              CfgLog::ELevelCaseDefault,  ///< corresponds to CfgLog::ELogProfileDefault
-                              CfgLog::ELevelCaseUpper     ///< corresponds to CfgLog::ELogProfileVerbose
+                              CfgLog::ELevelCaseLower,        ///< corresponds to CfgLog::ELogProfileNone
+                              CfgLog::ELevelCaseLower,        ///< corresponds to CfgLog::ELogProfileMinimal
+                              CfgLog::ELevelCaseDefault,      ///< corresponds to CfgLog::ELogProfileDefault
+                              CfgLog::ELevelCaseUpper         ///< corresponds to CfgLog::ELogProfileVerbose
                             };
 
 Logger::Logger() : Logger(NULL, CfgLog::CLogLevelDefault, CfgLog::CLogProfileDefault) {}
@@ -39,7 +37,6 @@ Logger::Logger(const char *logfile, CfgLog::level_e level, CfgLog::profile_e pro
 
   m_cfg = new CfgLog();
   m_removeCfg = true;
-
   m_cfg->logLevel = level;
   m_cfg->profile = profile;
 
@@ -47,7 +44,6 @@ Logger::Logger(const char *logfile, CfgLog::level_e level, CfgLog::profile_e pro
     strncpy(m_cfg->logfile, logfile, sizeof(m_cfg->logfile));
     m_cfg->logToFile = true;
   }
-
   init();
 }
 
@@ -81,6 +77,7 @@ int Logger::init(CfgLog *cfg) {
   if (cfg != NULL) {
     if (m_removeCfg) delete m_cfg;
     m_cfg = cfg;
+    m_removeCfg = false;
   } else return EErr;
 
   init();
@@ -141,7 +138,7 @@ int Logger::initStandardProfile(CfgLog::profile_e profile) {
 
 void Logger::emergency(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -150,7 +147,7 @@ void Logger::emergency(const char *fmt, ...) {
   constructMsg(msg, fmt, CfgLog::ELogEmergency);
 
   if (m_cfg->useColor) {
-    char buf[CfgLog::CMaxMsgLen];
+    char buf[CfgLog::CMaxLogMsgLen];
     strcpy(buf, msg);
     sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
   }
@@ -162,7 +159,7 @@ void Logger::emergency(const char *fmt, ...) {
 
 void Logger::alert(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -171,7 +168,7 @@ void Logger::alert(const char *fmt, ...) {
   constructMsg(msg, fmt, CfgLog::ELogAlert);
 
   if (m_cfg->useColor) {
-    char buf[CfgLog::CMaxMsgLen];
+    char buf[CfgLog::CMaxLogMsgLen];
     strcpy(buf, msg);
     sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
   }
@@ -183,7 +180,7 @@ void Logger::alert(const char *fmt, ...) {
 
 void Logger::critical(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -192,7 +189,7 @@ void Logger::critical(const char *fmt, ...) {
   constructMsg(msg, fmt, CfgLog::ELogCritical);
 
   if (m_cfg->useColor) {
-    char buf[CfgLog::CMaxMsgLen];
+    char buf[CfgLog::CMaxLogMsgLen];
     strcpy(buf, msg);
     sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
   }
@@ -204,16 +201,16 @@ void Logger::critical(const char *fmt, ...) {
 
 void Logger::error(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
   if (m_cfg->logLevel < CfgLog::ELogError) return;
 
   constructMsg(msg, fmt, CfgLog::ELogError);
-  
+
   if (m_cfg->useColor) {
-    char buf[CfgLog::CMaxMsgLen];
+    char buf[CfgLog::CMaxLogMsgLen];
     strcpy(buf, msg);
     sprintf(msg, "\033[%dm%s\033[0m", m_cfg->color, buf);
   }
@@ -225,7 +222,7 @@ void Logger::error(const char *fmt, ...) {
 
 void Logger::warning(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -239,7 +236,7 @@ void Logger::warning(const char *fmt, ...) {
 
 void Logger::notice(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -253,7 +250,7 @@ void Logger::notice(const char *fmt, ...) {
 
 void Logger::info(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -267,7 +264,7 @@ void Logger::info(const char *fmt, ...) {
 
 void Logger::debug(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -281,7 +278,7 @@ void Logger::debug(const char *fmt, ...) {
 
 void Logger::always(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen]       = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -323,34 +320,28 @@ int Logger::setPattern(const char *pattern) {
   }
 }
 
-/// TODO: change to accept aribitraty length patterns (e.g. us42)
+/// @todo change to accept aribitraty length patterns (e.g. us42)
 int Logger::initPattern(const char *pattern) {
 
   char tmp[5] = {0};
   int  patLen = strlen(pattern);
-  char pat[CfgLog::CMaxPatternLen] = {0};
+
+  if (strstr(pattern, "&") == NULL) {
+    PRINT_DEBUG("Invalid pattern string\n");
+    return EErr;
+  }
 
   // reset pattern array
   for (int i = 0; i < CfgLog::CMaxPatternItems; i++) {
     m_pattern[i] = EPatInvalid;
   }
 
-  strncpy(pat, pattern, CfgLog::CMaxPatternLen);
-  PRINT_DEBUG("Using pattern: %s\n", pat);
-
-  if (pattern == NULL) {
-    PRINT_DEBUG("Invalid pattern string\n");
-    return EErr;
-  } else if (strstr(pat, "&") == NULL) {
-    PRINT_DEBUG("Invalid pattern string\n");
-    return EErr;
-  }
-
+  PRINT_DEBUG("Using pattern: %s\n", pattern);
   for (int i = 0, j = 0; i < patLen; i++, j++) {
 
-    if (pat[i] == '&' && (i < (patLen - 2))) {
+    if (pattern[i] == '&' && (i < (patLen - 2))) {
 
-      sprintf(tmp, "%3.3s", &pat[++i]);
+      sprintf(tmp, "%3.3s", &pattern[++i]);
       PRINT_DEBUG("got pattern identifier: %s\n", tmp);
 
       if (strncmp(tmp, "tim", 3) == 0) {
@@ -371,12 +362,12 @@ int Logger::initPattern(const char *pattern) {
         // get number from string, add user pattern of number
         int no = findNextNumeric(tmp, NULL);
         PRINT_DEBUG("Got user pattern %d\n", no);
-        // TODO:
-        // maybe set EUsrBase + userPatternNo && calc back to no @ construct ?
-        // m_pattern must be non-typed for this to work
+        /// @todo
+        /// maybe set EUsrBase + userPatternNo && calc back to no @ construct ?
+        /// m_pattern must be non-typed for this to work
         m_pattern[j] = EPatUsr + no;
       } else {
-        PRINT_DEBUG("got nothing...\n");
+        PRINT_DEBUG("got invalid pattern identifier: %s\n", tmp);
         return EErr;
       }
 
@@ -394,7 +385,7 @@ int Logger::initPattern(const char *pattern) {
 }
 
 void Logger::constructMsg(char *msg, const char *fmt, CfgLog::level_e lev) {
-  char buf[CfgLog::CMaxMsgLen] = {0};
+  char buf[CfgLog::CMaxLogMsgLen] = {0};
 
   for (int i = 0; i < CfgLog::CMaxPatternItems; i++) {
     PRINT_DEBUG("item %d: %d\n", i, m_pattern[i]);
@@ -419,7 +410,7 @@ void Logger::constructMsg(char *msg, const char *fmt, CfgLog::level_e lev) {
 
   if (strlen(buf) >= strlen(fmt)) {
     PRINT_DEBUG("Constructed message: %s\n", buf);
-    memcpy(msg, buf, CfgLog::CMaxMsgLen);
+    memcpy(msg, buf, CfgLog::CMaxLogMsgLen);
   }
 }
 
@@ -445,8 +436,8 @@ void Logger::addPostfix(char *msg) {
 }
 
 void Logger::addLevel(char *msg, CfgLog::level_e lev) {
-  char levelbuf[20] = {0};
-  char lbuf[10] = {0};
+  char levelbuf[CfgLog::CMaxLogLevelStrLen] = {0};
+  char lbuf[CfgLog::CMaxLogLevelStrLen] = {0};
 
   strcpy(lbuf, CfgLog::CLogMsgLevel[lev]);
   switch(m_cfg->logLevelCase) {
@@ -480,4 +471,42 @@ void Logger::addTime(char *msg) {
 
 void Logger::addMsg(char *msg, const char *fmt) {
   strcat(msg, fmt);
+}
+
+// helper functions
+
+char* Logger::to_upper(char *buf, uint8_t len) {
+
+  for (uint8_t i = 0; i < len; i++) {
+    if ((buf[i] < ASCII_LOWER_START) || (buf[i] > ASCII_LOWER_END)) continue;
+    buf[i] -= 32;
+  }
+  return buf;
+}
+
+char* Logger::to_lower(char *buf, uint8_t len) {
+
+  for (uint8_t i = 0; i < len; i++) {
+    if ((buf[i] < ASCII_UPPER_START) || (buf[i] > ASCII_UPPER_END)) continue;
+    buf[i] += 32;
+  }
+  return buf;
+}
+
+int Logger::findNextNumeric(const char *buf, char **rembuf) {
+
+  const char *str = buf;
+  char c  = 0;
+  int ret = -1;
+
+  do {
+    c = *str++;
+    if (c == '\0') return ret;
+  } while (!isdigit(c));
+
+  if (rembuf != NULL) *rembuf = (char*)str;
+  if (c != '0') {
+    return ((ret = atoi(&c)) == 0 ? -1 : ret);
+  } else return 0;
+
 }

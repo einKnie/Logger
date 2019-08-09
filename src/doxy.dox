@@ -1,15 +1,47 @@
 
 /// @mainpage CPPLogger
 /// Documentation for a versatile and fully customizable logger for c++ applications.
+/// ## Repo structure
+/// The repo is structured as follows:<br>
+/// <pre>
+/// log
+///  \|_ bin/          <i>\<binary files\></i>
+///  \|_ doc/          <i>\<documentation\></i>
+///  \|_ inc/          <i>\<header files\></i>
+///  \|_ proj/         <i>\<build files\></i>
+///  \|_ src/          <i>\<source files\></i>
+/// </pre>
 /// ## Compilation and Usage
-/// The CPPLogger comes as a library to be linked with your application.
+/// To compile, move into proj/ and call<br>
+/// <b>make lib</b> to build just the library.<br>
+/// <b>make examples</b> to build the examples<br>
+/// <b>make doc</b> to build the documentation<br>
+/// or <b>make all</b> to build everything.
+///
+/// All compile units can subsequently be found in bin/<br>
+/// In order to use the CPPLogger in your application, simply compile with the library.<br>
 /// Just include the @ref cpp_log.h headerfile in your application and link to the library <i>libcpplogging.a</i> during compilation
 /// @code
 /// g++ <your/main.cpp> -I path/to/lib -L path/to/lib -lcpplogging
 /// @endcode
 /// For examples and usage, see the @ref examples page.
 /// - - - - - - - - - -
-/// @author einKnie@gmx.at
+/// @author ramharter
+
+/// @dir src
+/// @brief Source files
+
+/// @dir inc
+/// @brief Include files
+
+/// @dir proj
+/// @brief Build files
+
+/// @dir bin
+/// @brief Binary files
+
+/// @dir doc
+/// @brief documentation
 
 /// @page examples
 
