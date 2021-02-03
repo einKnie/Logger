@@ -1,8 +1,9 @@
-SRC_DIR     = ../src
-INC_DIR     = ../inc
-TARGET_DIR  = ../bin
-DOC_DIR     = ../doc
-OBJ_DIR     = ../bin/obj
+BASE        = ..
+SRC_DIR     = $(BASE)/src
+INC_DIR     = $(BASE)/inc
+TARGET_DIR  = $(BASE)/bin
+DOC_DIR     = $(BASE)/doc
+OBJ_DIR     = $(BASE)/bin/obj
 TARGET      = libcpplogging.a
 HEADER      = log.h
 
@@ -54,5 +55,5 @@ test: $(OBJ) $(TEST_OBJ)
 examples: $(EXAMPLES)
 
 doc:
-	doxygen doxyfile
+	doxygen Doxyfile
 	ln -sf $(DOC_DIR)/html/index.html $(DOC_DIR)/Documentation
