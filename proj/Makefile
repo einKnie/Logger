@@ -31,7 +31,7 @@ EXAMPLES    = $(patsubst $(SRC_DIR)/%.cpp, $(TARGET_DIR)/%, $(XMPL_SRCS))
 .PHONY: all clean lib test examples doc
 .PHONY: $(EXAMPLES)
 
-all: lib test examples doc
+all: lib examples doc
 
 $(EXAMPLES): $(XMPL_OBJ) $(OBJ)
 	$(foreach i, $(patsubst $(OBJ_DIR)/%.o,$(TARGET_DIR)/%,$(XMPL_OBJ)), $(CC) -o $(i) $(OBJ) $(CFLAGS) $(LIB_FLAGS) $(LIBS) $(patsubst $(TARGET_DIR)/%,$(SRC_DIR)/%.cpp,$(i));)
