@@ -42,6 +42,7 @@ typedef struct cfgLog {
   static const int   CMaxPatternIdLen   = 5;          ///< max length of a pattern identifier
   static const int   CMaxPatternLen     = CMaxPatternItems * CMaxPatternIdLen + 1; ///< 10*4 characters + null termination
   static const int   CMaxLogLevelStrLen = 10;
+  static const int   CLogColorLen       = 15;
 
   static const char  CLogMsgLevel[][CMaxLogLevelStrLen]; ///< List of loglevel strings
 

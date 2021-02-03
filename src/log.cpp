@@ -138,7 +138,7 @@ int Logger::initStandardProfile(CfgLog::profile_e profile) {
 
 void Logger::emergency(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxLogMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen + CfgLog::CLogColorLen] = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -159,7 +159,7 @@ void Logger::emergency(const char *fmt, ...) {
 
 void Logger::alert(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxLogMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen + CfgLog::CLogColorLen] = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -180,7 +180,7 @@ void Logger::alert(const char *fmt, ...) {
 
 void Logger::critical(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxLogMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen + CfgLog::CLogColorLen] = {0};
   va_list args;
 
   if (m_fd == NULL) return;
@@ -201,7 +201,7 @@ void Logger::critical(const char *fmt, ...) {
 
 void Logger::error(const char *fmt, ...) {
 
-  char msg[CfgLog::CMaxLogMsgLen]       = {0};
+  char msg[CfgLog::CMaxLogMsgLen + CfgLog::CLogColorLen] = {0};
   va_list args;
 
   if (m_fd == NULL) return;
